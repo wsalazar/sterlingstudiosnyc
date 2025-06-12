@@ -1,0 +1,32 @@
+{
+  "name": "sterlingstudionyc-frontend",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@heroicons/vue": "^2.2.0",
+    "axios": "^1.9.0",
+    "esbuild": "^0.25.5",
+    "nuxt": "^3.10.3",
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.11.4",
+    "@tailwindcss/forms": "^0.5.7",
+    "@types/node": "^22.15.24",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "typescript": "^5.0.2"
+  }
+}
