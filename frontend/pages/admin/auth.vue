@@ -6,7 +6,7 @@
       >
         <h1 class="text-4xl font-bold text-gray-900">
           <img
-            :src="SterlingStudiosLogo"
+            src="/assets/images/Logo_Final2022.jpg"
             alt="Sterling Studios NYC Logo"
             width="200px"
             height="200px"
@@ -133,8 +133,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { userApi, authApi } from '../../services/api'
-import SterlingStudiosLogo from '../../public/assets/images/Logo_Final2022.jpg'
+import { loginService } from '../../services/login'
 
 const activeTab = ref('login')
 const errorMessage = ref('')
@@ -151,22 +150,8 @@ const handleLogin = async () => {
     isLoading.value = true
     errorMessage.value = ''
 
-    const response = await authApi.login({
-      email: loginForm.value.email,
-      password: loginForm.value.password,
-    })
-
-    console.log('Login successful:', response)
-
-    // Clear the form
-    loginForm.value = {
-      email: '',
-      password: '',
-      rememberMe: false,
-    }
-
-    // Redirect to admin dashboard or home page
-    // await navigateTo('/admin/dashboard')
+    await loginService.login(loginForm.value)
+    await loginService.directToDashboard('/admin/dashboard')
   } catch (error) {
     console.error('Login failed:', error)
     errorMessage.value = error instanceof Error ? error.message : 'Login failed'
