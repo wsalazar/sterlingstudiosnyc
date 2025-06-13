@@ -1,0 +1,18 @@
+{
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "moduleResolution": "node",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
+  },
+  "include": ["./**/*.ts", "./**/*.d.ts", "./**/*.vue"]
+}

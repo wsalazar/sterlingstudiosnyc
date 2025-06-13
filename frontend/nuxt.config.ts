@@ -6,6 +6,11 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
   typescript: {
     strict: true,
+    typeCheck: true,
+    shim: false,
+  },
+  alias: {
+    '@': '.',
   },
   app: {
     head: {
@@ -37,7 +42,7 @@ export default defineNuxtConfig({
   pages: true,
   components: {
     global: true,
-    dirs: ['~/components'],
+    dirs: ['@/components'],
   },
   experimental: {
     payloadExtraction: false,
