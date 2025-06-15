@@ -40,7 +40,8 @@ export const authApi = {
   login: async (credentials: { email: string; password: string }) => {
     try {
       const response = await api.post('/v1/auth/login', credentials)
-      // Store the token
+      console.log('api', response)
+      localStorage.setItem('name', response.data.user.name)
       localStorage.setItem('access_token', response.data.access_token)
       return response.data
     } catch (error) {

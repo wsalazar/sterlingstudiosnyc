@@ -3,6 +3,14 @@ import { defineNuxtConfig } from 'nuxt/config'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  imports: {
+    dirs: ['composables'],
+  },
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
+    },
+  },
   modules: ['@nuxtjs/tailwindcss'],
   typescript: {
     strict: true,
@@ -18,6 +26,10 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        {
+          name: 'description',
+          content: 'Sterling Studios NYC - Your premier recording studio',
+        },
       ],
       link: [
         {

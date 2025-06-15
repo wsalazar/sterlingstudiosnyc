@@ -1,9 +1,16 @@
 <template>
   <div class="footer-menu h-max">
     <footer class="py-4 text-black">
-      <SocialMediaLinks />
-      <div class="container mx-auto text-center">
-        <p>&copy; 2025 Stream on Theme. All rights reserved.</p>
+      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div
+          class="flex flex-col items-center justify-between gap-4 sm:flex-row"
+        >
+          <SocialMediaLinks />
+          <div class="text-sm text-gray-500">
+            © {{ new Date().getFullYear() }} Sterling Studios. All rights
+            reserved.
+          </div>
+        </div>
       </div>
     </footer>
   </div>
