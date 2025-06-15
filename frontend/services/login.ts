@@ -1,5 +1,5 @@
 import { authApi } from './api'
-import { navigateTo } from 'nuxt/app'
+import { navigateTo } from '#imports'
 
 interface LoginForm {
   email: string
@@ -14,7 +14,7 @@ export const loginService = {
         email: form.email,
         password: form.password,
       })
-      console.log(response)
+      console.log('Login response:', response)
 
       form.email = ''
       form.password = ''

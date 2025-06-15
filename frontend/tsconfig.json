@@ -1,18 +1,33 @@
 {
-  "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "strict": true,
-    "skipLibCheck": true,
-    "types": ["node"],
-    "paths": {
-      "@/*": ["./*"]
-    },
-    "moduleResolution": "node",
-    "allowJs": true,
+    "jsx": "preserve",
+    "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "typeRoots": ["./node_modules/@types", "./types"]
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "types": ["node", "nuxt"],
+    "paths": {
+      "@/*": ["./*"],
+      "~/*": ["./*"],
+      "#app": ["./.nuxt/types/app.d.ts"],
+      "#imports": ["./.nuxt/types/imports.d.ts"]
+    }
   },
-  "include": ["./**/*.ts", "./**/*.d.ts", "./**/*.vue"]
+  "include": [
+    "./layouts/**/*.vue",
+    "./components/**/*.vue",
+    "./pages/**/*.vue",
+    "./composables/**/*.ts",
+    "./services/**/*.ts",
+    "./middleware/**/*.ts",
+    "./types/**/*.d.ts",
+    "./plugins/**/*.ts"
+  ],
+  "exclude": ["./node_modules", "./dist"]
 }

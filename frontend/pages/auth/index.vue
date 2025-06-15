@@ -237,13 +237,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { userApi, authApi } from '../services/api'
-import { loginService } from '../services/login'
+import { userApi } from '~/services/api'
+import { useLogin } from '~/composables/useLogin'
 import { navigateTo } from 'nuxt/app'
 
 const activeTab = ref('login')
 const errorMessage = ref('')
 const isLoading = ref(false)
+const { login } = useLogin()
 
 const loginForm = ref({
   email: '',
@@ -263,8 +264,13 @@ const handleLogin = async () => {
     isLoading.value = true
     errorMessage.value = ''
 
-    await loginService.login(loginForm.value)
-    await loginService.directToDashboard('dashboard')
+    const response = await login(
+      loginForm.value.email,
+      loginForm.value.password
+    )
+    if (response.success) {
+      await navigateTo('/dashboard')
+    }
   } catch (error) {
     console.error('Login failed:', error)
     errorMessage.value = error instanceof Error ? error.message : 'Login failed'
@@ -310,4 +316,8 @@ const handleRegister = async () => {
     isLoading.value = false
   }
 }
+
+definePageMeta({
+  layout: 'auth',
+})
 </script>

@@ -21,6 +21,8 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.0",
+    "@nuxt/kit": "^3.17.5",
+    "@nuxt/schema": "^3.17.5",
     "@prisma/client": "^5.10.2",
     "@supabase/supabase-js": "^2.39.7",
     "bcrypt": "^5.1.1",

@@ -7,10 +7,14 @@ export class SupabaseService {
   private supabase: SupabaseClient
 
   constructor(private configService: ConfigService) {
-    this.supabase = createClient(
-      this.configService.get<string>('SUPABASE_URL'),
-      this.configService.get<string>('SUPABASE_ANON_KEY')
-    )
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
+    const supabaseKey = this.configService.get<string>('SUPABASE_ANON_KEY')
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase configuration')
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseKey)
   }
 
   getClient(): SupabaseClient {
