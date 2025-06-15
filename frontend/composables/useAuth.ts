@@ -31,9 +31,11 @@ const useBooleanCookie = (name: string, options?: { maxAge?: number }) => {
 export const useAuth = () => {
   const isAuthenticated = useBooleanCookie('isAuthenticated', { maxAge: 86400 })
   const isAdmin = useBooleanCookie('isAdmin', { maxAge: 86400 })
+  const isLoading = ref(false)
 
   return {
     isAuthenticated,
     isAdmin,
+    isLoading,
   }
 }

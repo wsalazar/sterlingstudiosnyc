@@ -102,10 +102,8 @@ const handleSubmit = async () => {
     isLoading.value = true
     errorMessage.value = ''
     const response = await login(email.value, password.value)
-    console.log('index', response)
-    if (response.success && response.isAdmin) {
-      console.log('isAdmin')
-      router.push('/dashboard')
+    if (response.success) {
+      await navigateTo('/')
     }
   } catch (error) {
     console.error('Login failed:', error)

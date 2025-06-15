@@ -4,7 +4,7 @@ import { loginService } from '~/services/login'
 
 export const useLogin = () => {
   // State
-  const { isAuthenticated, isAdmin } = useAuth()
+  const { isAuthenticated, isAdmin, isLoading } = useAuth()
 
   // Actions
   const login = async (email: string, password: string) => {
@@ -27,11 +27,21 @@ export const useLogin = () => {
   }
 
   const logout = async () => {
+    if (isLoading) isLoading.value = true
+
     isAuthenticated.value = false
     isAdmin.value = false
+
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('name')
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    if (isLoading) {
+      isLoading.value = false
+    }
   }
 
-  // Computed properties
   const isLoggedIn = computed(() => isAuthenticated.value === true)
   const isUserAdmin = computed(() => isAdmin.value === true)
 

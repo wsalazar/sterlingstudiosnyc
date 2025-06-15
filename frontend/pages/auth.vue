@@ -269,7 +269,7 @@ const handleLogin = async () => {
       loginForm.value.password
     )
     if (response.success) {
-      await navigateTo('/dashboard')
+      await navigateTo('/')
     }
   } catch (error) {
     console.error('Login failed:', error)

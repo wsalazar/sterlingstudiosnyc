@@ -19,7 +19,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
   if (to.path === '/auth' || to.path === '/admin/auth') {
     if (isAuthenticated.value === true) {
-      return navigateTo('/dashboard')
+      return navigateTo('/')
     }
     return
   }
@@ -29,7 +29,7 @@ export default defineNuxtRouteMiddleware((to) => {
     if (isAuthenticated.value !== true) {
       return navigateTo('/admin/auth')
     }
-    return navigateTo('/dashboard')
+    return navigateTo('/')
   }
 
   if (!to.path.startsWith('/admin') && to.path !== '/auth') {
