@@ -6,11 +6,10 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { PrismaService } from '../prisma/prisma.service'
+import { PrismaService } from '../services/prisma.service'
 import * as bcrypt from 'bcrypt'
-import { Public } from '../auth/decorators/public.decorator'
+import { Public } from '../decorators/public.decorator'
 import { ConfigService } from '@nestjs/config'
-import { privateDecrypt } from 'crypto'
 
 @Controller('v1/auth')
 export class AuthController {
@@ -103,6 +102,7 @@ export class AuthController {
           name: user.name,
           admin: user.admin,
         },
+        success: true,
       }
     } catch (error) {
       if (error instanceof HttpException) {

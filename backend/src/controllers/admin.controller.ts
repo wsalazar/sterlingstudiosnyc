@@ -10,13 +10,13 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common'
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { RolesGuard } from '../auth/guards/roles.guard'
-import { Roles } from '../auth/decorators/roles.decorator'
-import { PrismaService } from '../prisma/prisma.service'
+import { JwtAuthGuard } from '../guards/jwt-auth.guard'
+import { RolesGuard } from '../guards/roles.guard'
+import { Roles } from '../decorators/roles.decorator'
+import { PrismaService } from '../services/prisma.service'
 import { ConfigService } from '@nestjs/config'
 import * as bcrypt from 'bcrypt'
-import { Public } from '../auth/decorators/public.decorator'
+import { Public } from '../decorators/public.decorator'
 
 @Controller('v1/admin')
 @UseGuards(JwtAuthGuard, RolesGuard)

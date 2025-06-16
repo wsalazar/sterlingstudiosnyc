@@ -17,18 +17,15 @@
     "start:frontend": "cd frontend && npm run start",
     "start:backend": "cd backend && npm run start",
     "prisma:watch": "chokidar 'prisma/schema/prisma",
-    "postinstall": "prisma generate"
+    "postinstall": "cd backend && prisma generate"
   },
   "devDependencies": {
-    "@nuxt/types": "^2.18.1",
     "@types/passport-jwt": "^4.0.1",
-    "concurrently": "^8.2.2",
-    "vue-tsc": "^2.2.10"
+    "concurrently": "^8.2.2"
   },
   "dependencies": {
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
-    "@nuxt/kit": "^3.17.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1"
   }

@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { loginService } from '~/services/login'
+import { navigateTo } from '#imports'
 
 export const useLogin = () => {
   // State
@@ -14,12 +15,14 @@ export const useLogin = () => {
         password,
         rememberMe: false,
       })
-      console.log('useLogin', response)
+      console.log('Login response:', response)
 
-      isAuthenticated.value = true
-      isAdmin.value = response.user.admin
-
-      return { success: true, isAdmin: response.user.admin }
+      if (response.success) {
+        isAuthenticated.value = true
+        isAdmin.value = response.user.admin
+        return { success: true, isAdmin: response.user.admin }
+      }
+      return { success: false }
     } catch (error) {
       console.error('Login error:', error)
       return { success: false }
@@ -32,10 +35,12 @@ export const useLogin = () => {
     isAuthenticated.value = false
     isAdmin.value = false
 
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('name')
+    if (process.client) {
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('name')
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await navigateTo('/auth')
 
     if (isLoading) {
       isLoading.value = false

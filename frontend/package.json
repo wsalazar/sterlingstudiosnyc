@@ -10,25 +10,27 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.7.2",
-    "@fortawesome/free-brands-svg-icons": "^6.7.2",
-    "@fortawesome/vue-fontawesome": "^3.0.8",
-    "@heroicons/vue": "^2.2.0",
-    "axios": "^1.9.0",
-    "esbuild": "^0.25.5",
-    "nuxt": "^3.10.3",
-    "vue": "^3.4.15",
-    "vue-router": "^4.2.5"
+    "@fortawesome/fontawesome-svg-core": "6.4.2",
+    "@fortawesome/free-brands-svg-icons": "6.4.2",
+    "@fortawesome/free-solid-svg-icons": "6.4.2",
+    "@fortawesome/vue-fontawesome": "3.0.5",
+    "@heroicons/vue": "2.0.18",
+    "@tanstack/vue-table": "8.9.3",
+    "axios": "1.6.2",
+    "nuxt": "3.8.2",
+    "vue": "3.3.4",
+    "vue-router": "4.2.5"
   },
   "devDependencies": {
-    "@nuxt/kit": "^3.17.5",
-    "@nuxt/schema": "^3.17.5",
-    "@nuxtjs/tailwindcss": "^6.11.4",
-    "@tailwindcss/forms": "^0.5.7",
-    "@types/node": "^22.15.24",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.5",
-    "typescript": "^5.0.2"
+    "@nuxt/devtools": "1.0.3",
+    "@tailwindcss/forms": "0.5.7",
+    "@types/node": "20.10.4",
+    "@vitejs/plugin-vue": "4.5.1",
+    "@vue/compiler-sfc": "3.3.4",
+    "autoprefixer": "10.4.16",
+    "postcss": "8.4.32",
+    "tailwindcss": "3.3.6",
+    "typescript": "5.3.3",
+    "vite": "4.5.1"
   }
 }

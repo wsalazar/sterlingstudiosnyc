@@ -36,6 +36,26 @@ export const userApi = {
   },
 }
 
+export const requestApi = {
+  uploadImage: async (imageData: {
+    name: string
+    description: string
+    images: File[]
+  }) => {
+    try {
+      const response = await api.post('v1/gallery', imageData)
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          error.response?.data?.message || 'Failed to create user'
+        )
+      }
+      throw error
+    }
+  },
+}
+
 export const authApi = {
   login: async (credentials: { email: string; password: string }) => {
     try {
