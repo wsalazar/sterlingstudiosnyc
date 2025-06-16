@@ -7,6 +7,12 @@ import { PrismaService } from '@/services/prisma.service'
 import { Body, Controller, Post, UseGuards } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
+interface GalleryImage {
+  url: string
+  alt?: string
+  width?: number
+  height?: number
+}
 @Controller('v1/gallery')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
@@ -20,8 +26,14 @@ export class GalleryController {
   @Public()
   @Post('/')
   async createGallery(
-    @Body() galleryData: { name: string; description: string }
+    @Body()
+    galleryData: {
+      name: string
+      description: string
+      images: GalleryImage[]
+    }
   ) {
+    console.log(galleryData)
     return galleryData
     // this.galleryRepository.createGallery(galleryData)
   }
