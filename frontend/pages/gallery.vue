@@ -1,10 +1,10 @@
 <template>
   <div class="p-4">
-    <div v-if="userIsAdmin" class="mt-4 p-4 bg-gray-100">
+    <div v-if="userIsAdmin" class="p-4 mt-4 bg-gray-100">
       <a @click="renderForm = true" class="cursor-pointer">
         <font-awesome-icon
           :icon="['fas', 'plus']"
-          class="h-5 w-5 text-gray-400"
+          class="w-5 h-5 text-gray-400"
         />
       </a>
       <DataTable :data="data" :columns="columns" />
@@ -14,13 +14,13 @@
 
   <div
     v-if="renderForm"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+    class="fixed inset-0 w-full h-full overflow-y-auto bg-gray-600 bg-opacity-50"
   >
     <div
-      class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+      class="relative p-5 mx-auto bg-white border rounded-md shadow-lg top-20 w-96"
     >
       <div class="mt-3">
-        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">
+        <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
           Add New Gallery Item
         </h3>
         <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -32,7 +32,7 @@
               type="text"
               id="name"
               v-model="formData.name"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter name"
             />
           </div>
@@ -47,7 +47,7 @@
               id="description"
               v-model="formData.description"
               rows="3"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter description"
             ></textarea>
           </div>
@@ -62,16 +62,16 @@
               multiple
               accept="image/*"
               @change="handleImageUpload"
-              class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              class="block w-full mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             <!-- Preview selected files -->
             <div v-if="formData.images.length > 0" class="mt-2">
-              <p class="text-sm text-gray-500 mb-2">Selected files:</p>
+              <p class="mb-2 text-sm text-gray-500">Selected files:</p>
               <ul class="space-y-1">
                 <li
                   v-for="(file, index) in formData.images"
                   :key="index"
-                  class="text-sm text-gray-600 flex items-center justify-between"
+                  class="flex items-center justify-between text-sm text-gray-600"
                 >
                   <span class="truncate">{{ file.name }}</span>
                   <button
@@ -81,7 +81,7 @@
                   >
                     <font-awesome-icon
                       :icon="['fas', 'times']"
-                      class="h-4 w-4"
+                      class="w-4 h-4"
                     />
                   </button>
                 </li>
@@ -89,17 +89,17 @@
             </div>
           </div>
 
-          <div class="flex justify-end space-x-3 mt-5">
+          <div class="flex justify-end mt-5 space-x-3">
             <button
               type="button"
               @click="closeModal"
-              class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Save
             </button>
@@ -115,6 +115,7 @@ const { isAdmin } = useAuth()
 const userIsAdmin = isAdmin.value
 const renderForm = ref(false)
 
+import { requestApi } from '../services/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -163,6 +164,8 @@ const handleSubmit = async () => {
   try {
     // Here you would typically send the form data to your backend
     console.log('Form submitted:', formData.value)
+    const response = await requestApi.uploadImage(formData.value)
+    console.log('gallery response', response)
     // Reset form and close modal
     formData.value = {
       name: '',

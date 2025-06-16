@@ -43,12 +43,23 @@ export const requestApi = {
     images: File[]
   }) => {
     try {
-      const response = await api.post('v1/gallery', imageData)
+      const formData = new FormData()
+      formData.append('name', imageData.name)
+      formData.append('description', imageData.description)
+      imageData.images.forEach((file) => {
+        formData.append('images', file)
+      })
+
+      const response = await api.post('v1/gallery', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       return response.data
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
-          error.response?.data?.message || 'Failed to create user'
+          error.response?.data?.message || 'Failed to upload images'
         )
       }
       throw error
