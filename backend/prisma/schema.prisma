@@ -19,4 +19,24 @@ model User {
   admin     Boolean
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-} 
+}
+
+model Gallery {
+  id            String @id @default(uuid())
+  name          String @unique
+  description   String
+  images        Image[]
+  createAt      DateTime @default(now())
+  updatedAt     DateTime @default(now())
+
+}
+
+model Image {
+  id          String @id @default(uuid())
+  url         String
+  gallery     Gallery @relation(fields: [galleryId], references: [id])
+  galleryId   String
+  createAt    DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+}

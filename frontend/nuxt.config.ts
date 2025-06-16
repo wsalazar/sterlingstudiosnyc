@@ -3,22 +3,9 @@ import { defineNuxtConfig } from 'nuxt/config'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  imports: {
-    dirs: ['composables'],
-  },
-  runtimeConfig: {
-    public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
-    },
-  },
-  modules: ['@nuxtjs/tailwindcss'],
   typescript: {
     strict: true,
-    typeCheck: true,
-    shim: false,
-  },
-  alias: {
-    '@': '.',
+    typeCheck: false,
   },
   app: {
     head: {
@@ -31,33 +18,21 @@ export default defineNuxtConfig({
           content: 'Sterling Studios NYC - Your premier recording studio',
         },
       ],
-      link: [
-        {
-          rel: 'icon',
-          type: 'image/png',
-          href: '/images/favicon.png?v=2',
-          sizes: '32x32',
-        },
-        {
-          rel: 'shortcut icon',
-          href: '/images/favicon.png?v=2',
-        },
-        {
-          rel: 'icon',
-          type: 'image/png',
-          href: '/images/favicon.png?v=2',
-          sizes: '32x32',
-        },
-      ],
     },
   },
-  pages: true,
-  components: {
-    global: true,
-    dirs: ['@/components'],
+  css: ['~/assets/css/main.css'],
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
   },
-  experimental: {
-    payloadExtraction: false,
+  vite: {
+    server: {
+      hmr: {
+        clientPort: 3000,
+        protocol: 'ws',
+      },
+    },
   },
-  compatibilityDate: '2025-06-13',
 })

@@ -1,21 +1,19 @@
-import { useCookie } from '#imports'
 import { ref, watch } from 'vue'
 
-const useBooleanCookie = (name: string, options?: { maxAge?: number }) => {
-  const cookie = useCookie(name, { ...options, default: () => false })
-  const state = ref(cookie.value === true)
+const useLocalStorage = (key: string, defaultValue: boolean) => {
+  const state = ref(defaultValue)
 
-  // Watch for cookie changes
-  watch(
-    () => cookie.value,
-    (newValue) => {
-      state.value = newValue === true
-    }
-  )
+  // Initialize from localStorage
+  if (process.client) {
+    const stored = localStorage.getItem(key)
+    state.value = stored === 'true'
+  }
 
-  // Watch for state changes
+  // Watch for changes and update localStorage
   watch(state, (newValue) => {
-    cookie.value = newValue
+    if (process.client) {
+      localStorage.setItem(key, String(newValue))
+    }
   })
 
   return {
@@ -29,8 +27,8 @@ const useBooleanCookie = (name: string, options?: { maxAge?: number }) => {
 }
 
 export const useAuth = () => {
-  const isAuthenticated = useBooleanCookie('isAuthenticated', { maxAge: 86400 })
-  const isAdmin = useBooleanCookie('isAdmin', { maxAge: 86400 })
+  const isAuthenticated = useLocalStorage('isAuthenticated', false)
+  const isAdmin = useLocalStorage('isAdmin', false)
   const isLoading = ref(false)
 
   return {

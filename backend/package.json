@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "prisma:migrate:ts": "ts-node prisma/run-migration.ts"
+    "prisma:migrate:ts": "ts-node prisma/run-migration.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -21,8 +22,6 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.0",
-    "@nuxt/kit": "^3.17.5",
-    "@nuxt/schema": "^3.17.5",
     "@prisma/client": "^5.10.2",
     "@supabase/supabase-js": "^2.39.7",
     "bcrypt": "^5.1.1",
@@ -34,8 +33,10 @@
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
+    "@nestjs/testing": "^10.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.12",
     "@types/node": "^20.3.1",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
