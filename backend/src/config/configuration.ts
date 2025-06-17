@@ -1,3 +1,5 @@
+import { Dropbox } from 'dropbox'
+
 export default () => ({
   supabase: {
     url: process.env.SUPABASE_URL,
@@ -14,5 +16,8 @@ export default () => ({
   },
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  },
+  dropbox: {
+    accessToken: process.env.DROPBOX_ACCESS_TOKEN,
   },
 })
