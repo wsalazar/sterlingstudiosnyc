@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '@/guards/jwt-auth.guard'
 import { RolesGuard } from '@/guards/roles.guard'
 import { GalleryRepository } from '@/repositories/gallery.repository'
 import { DropboxService } from '@/services/dropbox.service'
+import { ImageService } from '@/services/image.service'
 import { PrismaService } from '@/services/prisma.service'
 import {
   Body,
@@ -33,7 +34,8 @@ export class GalleryController {
     private prisma: PrismaService,
     private config: ConfigService,
     private galleryRepository: GalleryRepository,
-    private dropboxService: DropboxService
+    private dropboxService: DropboxService,
+    private imageService: ImageService
   ) {}
 
   @Public()
@@ -48,22 +50,30 @@ export class GalleryController {
       file: GalleryImage[]
     }
   ) {
-    // Upload files to Dropbox and get URLs
-    const imageUrls = await Promise.all(
-      files.map(async (file) => {
-        const url = await this.dropboxService.uploadFile(file)
-        return { url }
+    try {
+      // Upload files to Dropbox and get URLs
+      const imageUrls = await Promise.all(
+        files.map(async (file) => {
+          const image = await this.imageService.createLowResolutionImage(
+            file.buffer
+          )
+          this.imageService.saveFile(image, file)
+
+          const url = await this.dropboxService.uploadFile(file)
+          return { url, imageName: file.originalname }
+        })
+      )
+
+      const gallery = await this.galleryRepository.createGallery({
+        name: galleryData.name,
+        description: galleryData.description,
+        images: imageUrls,
       })
-    )
 
-    // Create gallery with image URLs
-    const gallery = await this.galleryRepository.createGallery({
-      name: galleryData.name,
-      description: galleryData.description,
-      images: imageUrls,
-    })
-
-    return gallery
+      return gallery
+    } catch (error) {
+      throw error
+    }
   }
 
   @Public()
@@ -89,7 +99,7 @@ export class GalleryController {
     const imageUrls = await Promise.all(
       files.map(async (file) => {
         const url = await this.dropboxService.uploadFile(file)
-        return { url }
+        return { url, imageName: file.originalname }
       })
     )
 

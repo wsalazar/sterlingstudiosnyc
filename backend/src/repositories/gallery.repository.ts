@@ -8,7 +8,7 @@ export class GalleryRepository {
   async createGallery(galleryData: {
     name: string
     description: string
-    images?: { url: string }[]
+    images?: { url: string; imageName: string }[]
   }) {
     return await this.prisma.gallery.create({
       data: {
@@ -43,7 +43,10 @@ export class GalleryRepository {
     })
   }
 
-  async addImagesToGallery(galleryId: string, images: { url: string }[]) {
+  async addImagesToGallery(
+    galleryId: string,
+    images: { url: string; imageName: string }[]
+  ) {
     return await this.prisma.gallery.update({
       where: { id: galleryId },
       data: {

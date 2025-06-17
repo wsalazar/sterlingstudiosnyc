@@ -13,6 +13,7 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:migrate:ts": "ts-node prisma/run-migration.ts",
+    "prisma:rollback": "ts-node prisma/rollback-migration.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
