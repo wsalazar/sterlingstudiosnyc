@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import * as sharp from 'sharp'
 import * as path from 'path'
 import { promises as fs } from 'fs'
+import { sanitizeFilename } from '@/utils/helper'
 
 @Injectable()
 export class ImageService {
@@ -40,7 +41,8 @@ export class ImageService {
 
   async saveFile(image: Buffer, file: Express.Multer.File) {
     try {
-      await fs.writeFile(`${this.uploadsDirectory}/${file.originalname}`, image)
+      const sanitizedFilename = sanitizeFilename(file.originalname)
+      await fs.writeFile(`${this.uploadsDirectory}/${sanitizedFilename}`, image)
     } catch (error) {
       throw new Error('There was an issue with storing the file' + error)
     }

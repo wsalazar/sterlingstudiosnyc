@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center justify-center space-x-2">
+  <div class="flex justify-center items-center space-x-2">
     <a
       v-for="icon in socialIcons"
       :key="icon.name"
@@ -36,11 +36,16 @@ interface SocialMediaIcon {
 }
 
 const socialIcons: SocialMediaIcon[] = [
-  { name: 'discord', icon: faDiscord, color: 'text-[#5865F2]' },
-  { name: 'instagram', icon: faInstagram, color: 'text-[#E1306C]' },
-  { name: 'x-twitter', icon: faXTwitter, color: 'text-black' },
-  { name: 'tiktok', icon: faTiktok, color: 'text-black' },
-  { name: 'youtube', icon: faYoutube, color: 'text-[#FF0000]' },
+  // { name: 'discord', icon: faDiscord, color: 'text-[#5865F2]' },
+  {
+    name: 'instagram',
+    icon: faInstagram,
+    color: 'text-[#E1306C]',
+    href: 'https://www.instagram.com/sterlingstudiosnyc',
+  },
+  // { name: 'x-twitter', icon: faXTwitter, color: 'text-black' },
+  // { name: 'tiktok', icon: faTiktok, color: 'text-black' },
+  // { name: 'youtube', icon: faYoutube, color: 'text-[#FF0000]' },
 ]
 
 socialIcons.forEach((icon) => library.add(icon.icon))

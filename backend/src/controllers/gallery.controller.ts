@@ -6,6 +6,7 @@ import { GalleryRepository } from '@/repositories/gallery.repository'
 import { DropboxService } from '@/services/dropbox.service'
 import { ImageService } from '@/services/image.service'
 import { PrismaService } from '@/services/prisma.service'
+import { sanitizeFilename } from '@/utils/helper'
 import {
   Body,
   Controller,
@@ -59,8 +60,9 @@ export class GalleryController {
           )
           this.imageService.saveFile(image, file)
 
-          const url = await this.dropboxService.uploadFile(file)
-          return { url, imageName: file.originalname }
+          // const url = await this.dropboxService.uploadFile(file)
+          const url = 'https://blah/haha'
+          return { url, imageName: sanitizeFilename(file.originalname) }
         })
       )
 
