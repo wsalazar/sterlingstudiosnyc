@@ -18,6 +18,8 @@ export default () => ({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   },
   dropbox: {
-    accessToken: process.env.DROPBOX_ACCESS_TOKEN,
+    appKey: process.env.DROPBOX_APP_KEY,
+    appSecret: process.env.DROPBOX_APP_SECRET,
+    oauthUrl: process.env.DROPBOX_OAUTH_URL,
   },
 })
