@@ -14,12 +14,9 @@ export const loginService = {
         email: form.email,
         password: form.password,
       })
-      console.log('Login response:', response)
-
       form.email = ''
       form.password = ''
       form.rememberMe = false
-
       return response
     } catch (error) {
       if (error instanceof Error) {

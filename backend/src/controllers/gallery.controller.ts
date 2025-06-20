@@ -18,7 +18,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { AuthGuard } from '@nestjs/passport'
 import { FilesInterceptor } from '@nestjs/platform-express'
+import { createParamDecorator, ExecutionContext } from '@nestjs/common'
+import { User } from '@prisma/client'
 
 interface GalleryImage {
   lastModified: number
@@ -26,6 +29,13 @@ interface GalleryImage {
   size: number
   type: string
 }
+
+export const GetUser = createParamDecorator(
+  (data, context: ExecutionContext) => {
+    const request = context.switchToHttp().getRequest()
+    return request.user
+  }
+)
 
 @Controller('v1/gallery')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -39,11 +49,11 @@ export class GalleryController {
     private imageService: ImageService
   ) {}
 
-  @Public()
   @Post('/')
   @UseInterceptors(FilesInterceptor('file', 10))
   async createGallery(
     @UploadedFiles() files: Express.Multer.File[],
+    @GetUser() user: User,
     @Body()
     galleryData: {
       name: string
@@ -70,6 +80,7 @@ export class GalleryController {
         name: galleryData.name,
         description: galleryData.description,
         images: imageUrls,
+        createdBy: user.id,
       })
 
       return gallery
