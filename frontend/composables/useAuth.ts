@@ -1,15 +1,20 @@
 import { ref, watch } from 'vue'
 
+/**
+ * @todo use pinia for this stuff instead of local storage
+ * @param key
+ * @param defaultValue
+ * @returns
+ */
+
 const useLocalStorage = (key: string, defaultValue: boolean) => {
   const state = ref(defaultValue)
 
-  // Initialize from localStorage
   if (process.client) {
     const stored = localStorage.getItem(key)
     state.value = stored === 'true'
   }
 
-  // Watch for changes and update localStorage
   watch(state, (newValue) => {
     if (process.client) {
       localStorage.setItem(key, String(newValue))

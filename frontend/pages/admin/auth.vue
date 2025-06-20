@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen">
-    <div class="w-full max-w-md px-4 py-8">
-      <div class="flex flex-col items-center justify-center py-12">
+  <div class="flex flex-col justify-center items-center min-h-screen">
+    <div class="px-4 py-8 w-full max-w-md">
+      <div class="flex flex-col justify-center items-center py-12">
         <h1 class="text-4xl font-bold text-gray-900">
           <img
             src="/images/Logo_Final2022.jpg"
@@ -15,7 +15,7 @@
       <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <div
           v-if="errorMessage"
-          class="p-4 mb-4 text-red-700 bg-red-100 border border-red-400 rounded"
+          class="p-4 mb-4 text-red-700 bg-red-100 rounded border border-red-400"
         >
           {{ errorMessage }}
         </div>
@@ -37,7 +37,7 @@
                     type="email"
                     autocomplete="email"
                     required
-                    class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -57,7 +57,7 @@
                     type="password"
                     autocomplete="current-password"
                     required
-                    class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -66,7 +66,7 @@
                 <button
                   type="submit"
                   :disabled="isLoading"
-                  class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  class="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   <span v-if="isLoading">Loading...</span>
                   <span v-else>Sign in</span>
@@ -87,6 +87,7 @@ definePageMeta({
 
 import { ref } from 'vue'
 import { useLogin } from '~/composables/useLogin'
+import { useUserStore } from '@/stores/user'
 
 const { login } = useLogin()
 const email = ref('')
@@ -99,8 +100,9 @@ const handleSubmit = async () => {
     isLoading.value = true
     errorMessage.value = ''
     const response = await login(email.value, password.value)
-    console.log(response)
     if (response.success) {
+      const userStore = useUserStore()
+      userStore.setUserName(response.user)
       await navigateTo('/')
     }
   } catch (error) {

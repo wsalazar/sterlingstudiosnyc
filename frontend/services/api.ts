@@ -2,15 +2,12 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: 'http://localhost:3001',
+  withCredentials: true,
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-    if (!(config.data instanceof FormData)) {
-      config.headers['Content-Type'] = 'application/json'
-    }
+  if (!(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json'
   }
   return config
 })
@@ -74,9 +71,7 @@ export const authApi = {
           'Content-Type': 'application/json',
         },
       })
-      console.log('api', response)
-      localStorage.setItem('name', response.data.user.name)
-      localStorage.setItem('access_token', response.data.access_token)
+      console.log('login', response.data)
       return response.data
     } catch (error) {
       if (axios.isAxiosError(error)) {

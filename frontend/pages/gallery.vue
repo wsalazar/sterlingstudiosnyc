@@ -14,10 +14,10 @@
 
   <div
     v-if="renderForm"
-    class="fixed inset-0 w-full h-full overflow-y-auto bg-gray-600 bg-opacity-50"
+    class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
     <div
-      class="relative p-5 mx-auto bg-white border rounded-md shadow-lg top-20 w-96"
+      class="relative top-20 p-5 mx-auto w-96 bg-white rounded-md border shadow-lg"
     >
       <div class="mt-3">
         <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
@@ -32,7 +32,7 @@
               type="text"
               id="name"
               v-model="formData.name"
-              class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter name"
             />
           </div>
@@ -47,7 +47,7 @@
               id="description"
               v-model="formData.description"
               rows="3"
-              class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter description"
             ></textarea>
           </div>
@@ -62,7 +62,7 @@
               multiple
               accept="image/*"
               @change="handleImageUpload"
-              class="block w-full mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              class="block mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             <!-- Preview selected files -->
             <div v-if="formData.images.length > 0" class="mt-2">
@@ -71,7 +71,7 @@
                 <li
                   v-for="(file, index) in formData.images"
                   :key="index"
-                  class="flex items-center justify-between text-sm text-gray-600"
+                  class="flex justify-between items-center text-sm text-gray-600"
                 >
                   <span class="truncate">{{ file.name }}</span>
                   <button
@@ -93,13 +93,13 @@
             <button
               type="button"
               @click="closeModal"
-              class="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md border border-transparent shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Save
             </button>
@@ -182,6 +182,26 @@ const columns = [
   {
     accessorKey: 'name',
     header: 'Name',
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'description',
+    header: 'Description',
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'user',
+    header: 'User',
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'totalSpace',
+    header: 'Total Space',
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'dateUploaded',
+    header: 'Date Uploaded',
     enableSorting: true,
   },
 ]

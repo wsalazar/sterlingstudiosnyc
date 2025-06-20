@@ -4,12 +4,14 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  Res,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { PrismaService } from '../services/prisma.service'
 import * as bcrypt from 'bcrypt'
 import { Public } from '../decorators/public.decorator'
 import { ConfigService } from '@nestjs/config'
+import { Response } from 'express'
 
 @Controller('v1/auth')
 export class AuthController {
@@ -71,8 +73,12 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Post('login')
-  async login(@Body() loginData: { email: string; password: string }) {
+  async login(
+    @Body() loginData: { email: string; password: string },
+    @Res({ passthrough: true }) response: Response
+  ): Promise<{ user: object; success: boolean }> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email: loginData.email },
@@ -94,10 +100,15 @@ export class AuthController {
       const payload = { email: user.email, sub: user.id }
       const token = this.jwtService.sign(payload)
 
+      response.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'lax',
+        maxAge: 3600000,
+      })
+
       return {
-        access_token: token,
         user: {
-          id: user.id,
           email: user.email,
           name: user.name,
           admin: user.admin,

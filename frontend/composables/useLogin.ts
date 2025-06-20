@@ -15,12 +15,14 @@ export const useLogin = () => {
         password,
         rememberMe: false,
       })
-      console.log('Login response:', response)
-
       if (response.success) {
         isAuthenticated.value = true
         isAdmin.value = response.user.admin
-        return { success: true, isAdmin: response.user.admin }
+        return {
+          success: true,
+          isAdmin: response.user.admin,
+          user: response.user.name,
+        }
       }
       return { success: false }
     } catch (error) {

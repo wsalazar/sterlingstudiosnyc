@@ -9,6 +9,7 @@ export class GalleryRepository {
     name: string
     description: string
     images?: { url: string; imageName: string }[]
+    createdBy: string
   }) {
     return await this.prisma.gallery.create({
       data: {
@@ -19,6 +20,7 @@ export class GalleryRepository {
               create: galleryData.images,
             }
           : undefined,
+        createdBy: galleryData.createdBy,
       },
       include: {
         images: true,

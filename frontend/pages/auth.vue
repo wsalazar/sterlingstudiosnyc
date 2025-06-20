@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen">
-    <div class="w-full max-w-md px-4 py-8">
-      <div class="flex flex-col items-center justify-center py-12">
+  <div class="flex flex-col justify-center items-center min-h-screen">
+    <div class="px-4 py-8 w-full max-w-md">
+      <div class="flex flex-col justify-center items-center py-12">
         <h1 class="text-4xl font-bold text-gray-900">
           <img
             src="/images/Logo_Final2022.jpg"
@@ -15,7 +15,7 @@
 
       <div
         v-if="errorMessage"
-        class="p-4 mb-4 text-red-700 bg-red-100 border border-red-400 rounded"
+        class="p-4 mb-4 text-red-700 bg-red-100 rounded border border-red-400"
       >
         {{ errorMessage }}
       </div>
@@ -73,7 +73,7 @@
                   type="email"
                   autocomplete="email"
                   required
-                  class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -93,19 +93,19 @@
                   type="password"
                   autocomplete="current-password"
                   required
-                  class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
             </div>
 
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <input
                   id="remember-me"
                   v-model="loginForm.rememberMe"
                   name="remember-me"
                   type="checkbox"
-                  class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
                 />
                 <label
                   for="remember-me"
@@ -128,7 +128,7 @@
             <div>
               <button
                 type="submit"
-                class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                class="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 Sign in
               </button>
@@ -152,7 +152,7 @@
                   type="text"
                   autocomplete="name"
                   required
-                  class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -172,7 +172,7 @@
                   type="email"
                   autocomplete="email"
                   required
-                  class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -193,7 +193,7 @@
                   autocomplete="new-password"
                   required
                   minlength="10"
-                  class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -214,7 +214,7 @@
                   autocomplete="new-password"
                   minlength="10"
                   required
-                  class="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block px-3 py-2 w-full placeholder-gray-400 rounded-md border border-gray-300 shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
             </div>
@@ -222,7 +222,7 @@
             <div>
               <button
                 type="submit"
-                class="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                class="flex justify-center px-4 py-2 w-full text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 Create account
               </button>
@@ -239,6 +239,7 @@ import { ref } from 'vue'
 import { userApi } from '~/services/api'
 import { useLogin } from '~/composables/useLogin'
 import { navigateTo } from '#imports'
+import { useUserStore } from '@/stores/user'
 
 const activeTab = ref('login')
 const errorMessage = ref('')
@@ -267,17 +268,9 @@ const handleLogin = async () => {
       loginForm.value.email,
       loginForm.value.password
     )
-    console.log('Login response:', response)
-
     if (response.success) {
-      // Ensure token is set
-      const token = localStorage.getItem('access_token')
-      console.log('Token after login:', token)
-
-      if (!token) {
-        throw new Error('Login failed - no token received')
-      }
-
+      const userStore = useUserStore()
+      userStore.setUserName(response.user)
       await navigateTo('/')
     } else {
       throw new Error('Login failed')
