@@ -1,35 +1,35 @@
 <template>
   <div class="w-full">
     <!-- Search and Filter Bar -->
-    <div class="mb-4 flex flex-wrap items-center gap-4">
+    <div class="flex flex-wrap gap-4 items-center mb-4">
       <div class="relative flex-1">
         <div
-          class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
+          class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none"
         >
           <font-awesome-icon
             :icon="['fas', 'search']"
-            class="h-5 w-5 text-gray-400"
+            class="w-5 h-5 text-gray-400"
           />
         </div>
         <input
           v-model="globalFilter"
           type="text"
-          class="block w-full rounded-lg border border-gray-300 bg-white p-2.5 pl-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+          class="block p-2.5 pl-10 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
           placeholder="Search..."
         />
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex gap-2 items-center">
         <button
           v-for="column in table
             .getAllColumns()
             .filter((col) => col.getCanFilter())"
           :key="column.id"
           @click="column.toggleSorting()"
-          class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50"
         >
           <font-awesome-icon
             :icon="['fas', getSortIcon(column)]"
-            class="mr-2 h-4 w-4"
+            class="mr-2 w-4 h-4"
           />
           {{ column.columnDef.header }}
         </button>
@@ -38,10 +38,10 @@
 
     <!-- Table -->
     <div
-      class="relative overflow-x-auto rounded-lg border border-gray-200 shadow"
+      class="overflow-x-auto relative rounded-lg border border-gray-200 shadow"
     >
-      <table class="w-full text-left text-sm text-gray-500">
-        <thead class="bg-gray-50 text-xs uppercase text-gray-700">
+      <table class="w-full text-sm text-left text-gray-500">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
           <tr>
             <th
               v-for="header in table.getFlatHeaders()"
@@ -56,12 +56,12 @@
                   : null
               "
             >
-              <div class="flex items-center gap-2">
+              <div class="flex gap-2 items-center">
                 {{ header.column.columnDef.header }}
                 <font-awesome-icon
                   v-if="header.column.getCanSort()"
                   :icon="['fas', getSortIcon(header.column)]"
-                  class="h-4 w-4"
+                  class="w-4 h-4"
                 />
               </div>
             </th>
@@ -71,14 +71,15 @@
           <tr
             v-for="row in table.getRowModel().rows"
             :key="row.id"
-            class="border-b bg-white hover:bg-gray-50"
+            class="bg-white border-b hover:bg-gray-50"
           >
             <td
               v-for="cell in row.getVisibleCells()"
               :key="cell.id"
               class="px-6 py-4"
             >
-              {{ cell.getValue() }}
+              {{ cell.renderValue() }}
+              <!-- Debug: {{ cell.column.id }} - {{ typeof cell.renderValue() }} -->
             </td>
           </tr>
         </tbody>
@@ -86,47 +87,47 @@
     </div>
 
     <!-- Pagination -->
-    <div class="mt-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
+    <div class="flex justify-between items-center mt-4">
+      <div class="flex gap-2 items-center">
         <button
           :disabled="!table.getCanPreviousPage()"
           @click="table.setPageIndex(0)"
-          class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
         >
-          <font-awesome-icon :icon="['fas', 'chevron-left']" class="h-4 w-4" />
-          <font-awesome-icon :icon="['fas', 'chevron-left']" class="h-4 w-4" />
+          <font-awesome-icon :icon="['fas', 'chevron-left']" class="w-4 h-4" />
+          <font-awesome-icon :icon="['fas', 'chevron-left']" class="w-4 h-4" />
         </button>
         <button
           :disabled="!table.getCanPreviousPage()"
           @click="table.previousPage()"
-          class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
         >
-          <font-awesome-icon :icon="['fas', 'chevron-left']" class="h-4 w-4" />
+          <font-awesome-icon :icon="['fas', 'chevron-left']" class="w-4 h-4" />
         </button>
         <button
           :disabled="!table.getCanNextPage()"
           @click="table.nextPage()"
-          class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
         >
-          <font-awesome-icon :icon="['fas', 'chevron-right']" class="h-4 w-4" />
+          <font-awesome-icon :icon="['fas', 'chevron-right']" class="w-4 h-4" />
         </button>
         <button
           :disabled="!table.getCanNextPage()"
           @click="table.setPageIndex(table.getPageCount() - 1)"
-          class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
         >
-          <font-awesome-icon :icon="['fas', 'chevron-right']" class="h-4 w-4" />
-          <font-awesome-icon :icon="['fas', 'chevron-right']" class="h-4 w-4" />
+          <font-awesome-icon :icon="['fas', 'chevron-right']" class="w-4 h-4" />
+          <font-awesome-icon :icon="['fas', 'chevron-right']" class="w-4 h-4" />
         </button>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex gap-2 items-center">
         <span class="text-sm text-gray-700">
           Page {{ table.getState().pagination.pageIndex + 1 }} of
           {{ table.getPageCount() }}
         </span>
         <select
           v-model="pageSize"
-          class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+          class="px-3 py-2 text-sm text-gray-700 bg-white rounded-lg border border-gray-300"
         >
           <option
             v-for="size in [10, 20, 30, 40, 50]"
@@ -186,7 +187,7 @@ const props = defineProps<{
   data: any[]
   columns: ColumnDef<any>[]
 }>()
-
+console.log('props', props)
 const globalFilter = ref('')
 const pageSize = ref(10)
 
@@ -197,9 +198,11 @@ const getSortIcon = (column: any) => {
 
 const table = useVueTable({
   get data() {
+    console.log('Table data:', props.data)
     return props.data
   },
   get columns() {
+    console.log('Table columns:', props.columns)
     return props.columns
   },
   getCoreRowModel: getCoreRowModel(),
