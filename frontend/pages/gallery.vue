@@ -7,7 +7,7 @@
           class="w-5 h-5 text-gray-400"
         />
       </a>
-      <DataTable :data="data" :columns="columns" />
+      <DataTable :data="transformedData" :columns="columns" />
     </div>
   </div>
   <div v-if="!userIsAdmin">non-admin</div>
@@ -30,10 +30,23 @@
             >
             <input
               type="text"
+              required
               id="name"
               v-model="formData.name"
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter name"
+            />
+          </div>
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700"
+              >Subdirectory</label
+            >
+            <input
+              type="text"
+              id="subdirectory"
+              v-model="formData.subdirectory"
+              class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter a subdirectory"
             />
           </div>
 
@@ -46,6 +59,7 @@
             <textarea
               id="description"
               v-model="formData.description"
+              required
               rows="3"
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter description"
@@ -60,6 +74,7 @@
               type="file"
               id="images"
               multiple
+              required
               accept="image/*"
               @change="handleImageUpload"
               class="block mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -115,31 +130,59 @@ const { isAdmin } = useAuth()
 const userIsAdmin = isAdmin.value
 const renderForm = ref(false)
 
-import { requestApi } from '../services/api'
+import { upload, fetch } from '../services/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { type ColumnDef } from '@tanstack/vue-table'
 
 // Add icons to the library
 library.add(faPlus, faTimes)
 
+onMounted(async () => {
+  try {
+    const galleries = await fetch.gallery()
+    data.value = galleries.data
+    console.log('Fetched data:', data.value)
+    console.log('Columns definition:', columns)
+  } catch (error) {
+    console.error('Error fetching gallery:', error)
+  }
+})
+
 interface TableData {
   id: number
   name: string
+  description: string
+  user?: { name: string }
+  createAt?: string
+  gallerySpace?: string
 }
 
 const data = ref<TableData[]>([])
+
+const transformedData = computed(() => {
+  return data.value.map((item) => ({
+    ...item,
+    userDisplay: item.user?.name || 'No name',
+    createAt: item.createAt
+      ? new Date(item.createAt).toLocaleDateString()
+      : 'No date',
+  }))
+})
 
 interface FormData {
   name: string
   description: string
   images: File[]
+  subdirectory: string
 }
 
 const formData = ref<FormData>({
   name: '',
   description: '',
   images: [] as File[],
+  subdirectory: '',
 })
 
 const closeModal = () => {
@@ -147,6 +190,7 @@ const closeModal = () => {
   formData.value.name = ''
   formData.value.description = ''
   formData.value.images = []
+  formData.value.subdirectory = ''
 }
 const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -162,15 +206,12 @@ const removeFile = (index: number) => {
 
 const handleSubmit = async () => {
   try {
-    // Here you would typically send the form data to your backend
-    console.log('Form submitted:', formData.value)
-    const response = await requestApi.uploadImage(formData.value)
-    console.log('gallery response', response)
-    // Reset form and close modal
+    await upload.image(formData.value)
     formData.value = {
       name: '',
       description: '',
       images: [],
+      subdirectory: '',
     }
     renderForm.value = false
   } catch (error) {
@@ -178,31 +219,26 @@ const handleSubmit = async () => {
   }
 }
 
-const columns = [
+const columns: ColumnDef<TableData>[] = [
   {
     accessorKey: 'name',
     header: 'Name',
-    enableSorting: true,
   },
   {
     accessorKey: 'description',
     header: 'Description',
-    enableSorting: true,
   },
   {
-    accessorKey: 'user',
+    accessorKey: 'user.name',
     header: 'User',
-    enableSorting: true,
   },
   {
-    accessorKey: 'totalSpace',
-    header: 'Total Space',
-    enableSorting: true,
+    accessorKey: 'gallerySpace',
+    header: 'Gallery Space',
   },
   {
-    accessorKey: 'dateUploaded',
+    accessorKey: 'createAt',
     header: 'Date Uploaded',
-    enableSorting: true,
   },
 ]
 

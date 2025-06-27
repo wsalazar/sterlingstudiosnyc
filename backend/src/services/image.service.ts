@@ -6,16 +6,20 @@ import { sanitizeFilename } from '@/utils/helper'
 
 @Injectable()
 export class ImageService {
-  private readonly uploadsDirectory: string
+  private uploadsDirectory: string
+  private subdirectory: string
   constructor() {
-    console.log('this is the dirnmae', __dirname)
+    this.setUploadsDirectory()
+    this.ensureUploadsDirectoryExists()
+  }
+
+  async setUploadsDirectory(subdirectory: string = '') {
     this.uploadsDirectory = path.join(
       __dirname + '/../../',
       'public',
-      'uploads'
+      'uploads',
+      ...subdirectory.split('/')
     )
-    console.log('uplaods', this.uploadsDirectory)
-    this.ensureUploadsDirectoryExists()
   }
 
   async ensureUploadsDirectoryExists() {
@@ -24,6 +28,12 @@ export class ImageService {
     } catch {
       fs.mkdir(this.uploadsDirectory, { recursive: true })
     }
+  }
+
+  async setSubdirectory(subdirectory) {
+    this.subdirectory = subdirectory
+    await this.setUploadsDirectory(subdirectory)
+    await this.ensureUploadsDirectoryExists()
   }
 
   async createLowResolutionImage(buffer: Buffer): Promise<Buffer> {
@@ -39,7 +49,11 @@ export class ImageService {
       .toBuffer()
   }
 
-  async saveFile(image: Buffer, file: Express.Multer.File) {
+  async saveFile(
+    image: Buffer,
+    file: Express.Multer.File,
+    subdirectory: string
+  ) {
     try {
       const sanitizedFilename = sanitizeFilename(file.originalname)
       await fs.writeFile(`${this.uploadsDirectory}/${sanitizedFilename}`, image)

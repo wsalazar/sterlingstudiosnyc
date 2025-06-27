@@ -41,6 +41,7 @@ export class GalleryRepository {
     return await this.prisma.gallery.findMany({
       include: {
         images: true,
+        user: true,
       },
     })
   }

@@ -32,24 +32,24 @@ export const userApi = {
   },
 }
 
-export const requestApi = {
-  uploadImage: async (imageData: {
+export const upload = {
+  image: async (imageData: {
     name: string
     description: string
     images: File[]
+    subdirectory: string
   }) => {
     try {
       const formData = new FormData()
-      formData.append('name', imageData.name)
-      formData.append('description', imageData.description)
+      Object.entries(imageData).forEach(([index, value]) => {
+        if (index !== 'images' && typeof value === 'string') {
+          formData.append(index, value)
+        }
+      })
       imageData.images.forEach((file) => {
         formData.append('file', file)
       })
-      console.log('Form Data contents:')
-      console.log('name:', formData.get('name'))
-      console.log('description:', formData.get('description'))
-      console.log('files:', imageData.images)
-      console.log('formData files', formData.getAll('file'))
+
       const response = await api.post('v1/gallery', formData)
       return response.data
     } catch (error) {
@@ -57,6 +57,18 @@ export const requestApi = {
         throw new Error(
           error.response?.data?.message || 'Failed to upload images'
         )
+      }
+      throw error
+    }
+  },
+}
+export const fetch = {
+  gallery: async () => {
+    try {
+      return await api.get('v1/gallery')
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || error)
       }
       throw error
     }
