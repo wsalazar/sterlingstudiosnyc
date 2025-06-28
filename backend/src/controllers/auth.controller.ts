@@ -5,6 +5,9 @@ import {
   HttpException,
   HttpStatus,
   Res,
+  Get,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { PrismaService } from '../services/prisma.service'
@@ -100,7 +103,7 @@ export class AuthController {
       const payload = { email: user.email, sub: user.id }
       const token = this.jwtService.sign(payload)
 
-      response.cookie('access_token', token, {
+      response.cookie('sterling_session', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
         sameSite: 'lax',
@@ -121,5 +124,37 @@ export class AuthController {
       }
       throw new HttpException('Login failed', HttpStatus.INTERNAL_SERVER_ERROR)
     }
+  }
+
+  @Get('me')
+  async getMe(@Req() req): Promise<{
+    email: string
+    name: string
+    admin: boolean
+    success: boolean
+  }> {
+    console.log(req.user.id)
+    if (!req.user) throw new UnauthorizedException()
+    const user = await this.prisma.user.findUnique({
+      where: { id: req.user.id },
+    })
+    return {
+      email: user.email,
+      name: user.name,
+      admin: user.admin,
+      success: true,
+    }
+  }
+
+  @Public()
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('sterling_session', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'lax',
+      path: '/',
+    })
+    return { success: true }
   }
 }

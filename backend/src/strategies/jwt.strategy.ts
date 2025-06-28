@@ -6,7 +6,7 @@ import { Request } from 'express'
 
 const cookieExtractor = (req: Request): string | null => {
   if (req && req.cookies) {
-    return req.cookies['access_token']
+    return req.cookies['sterling_session']
   }
   return null
 }

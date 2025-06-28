@@ -56,7 +56,7 @@ export class S3Service extends CloudProviderService {
     do {
       const command = new ListObjectsV2Command({
         Bucket: this.s3Bucket,
-        Prefix: PreconditionFailedException,
+        // Prefix: PreconditionFailedException,
         ContinuationToken: continuationToken,
       })
       const response = await this.s3.send(command)

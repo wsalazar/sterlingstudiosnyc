@@ -1,12 +1,24 @@
 <template>
-  <div class="flex min-h-screen">
+  <div
+    v-if="isLoading"
+    class="flex fixed inset-0 z-50 justify-center items-center bg-white"
+  >
+    <div class="text-center">
+      <div
+        class="mx-auto w-12 h-12 rounded-full border-b-2 border-blue-500 animate-spin"
+      ></div>
+      <p class="mt-4 text-gray-600">Loading...</p>
+    </div>
+  </div>
+
+  <div v-else class="flex min-h-screen">
     <Transition name="fade" mode="out-in">
       <div class="flex w-full min-h-screen">
         <aside v-if="isAdmin" class="w-64 text-white bg-black">
           <div class="p-4">
             <h1 class="text-xl font-bold">Admin Dashboard</h1>
           </div>
-          <div class="items-center justify-center">
+          <div class="justify-center items-center">
             <NuxtLink to="/">
               <img
                 src="/images/Logo_Final2022.jpg"
@@ -20,7 +32,7 @@
           <MenuItems :isAdmin="isAdmin" />
         </aside>
         <aside v-else class="w-64 text-white bg-black">
-          <div class="items-center justify-center">
+          <div class="justify-center items-center">
             <NuxtLink to="/">
               <img
                 src="/assets/images/Logo_Final2022.jpg"
@@ -59,7 +71,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const { isAdmin: userIsAdmin } = useAuth()
+const { isAdmin: userIsAdmin, isLoading } = useAuth()
 
 const isAdmin = computed(() => userIsAdmin.value === true)
 </script>
