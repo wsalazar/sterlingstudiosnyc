@@ -37,7 +37,7 @@ export class GalleryRepository {
     })
   }
 
-  async getAllGalleries() {
+  async getAllGalleries(): Promise<Gallery[] | []> {
     return await this.prisma.gallery.findMany({
       include: {
         images: true,

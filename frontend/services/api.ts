@@ -93,3 +93,26 @@ export const authApi = {
     }
   },
 }
+
+export const auth = {
+  validate: async () => {
+    try {
+      const response = await api.get('/v1/auth/me')
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        // User is not authenticated
+        return null
+      }
+      throw error
+    }
+  },
+  logout: async () => {
+    try {
+      const response = await api.post('/v1/auth/logout')
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+}

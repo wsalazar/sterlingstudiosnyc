@@ -49,14 +49,9 @@ export class ImageService {
       .toBuffer()
   }
 
-  async saveFile(
-    image: Buffer,
-    file: Express.Multer.File,
-    subdirectory: string
-  ) {
+  async saveFile(image: Buffer, file: Express.Multer.File) {
     try {
-      const sanitizedFilename = sanitizeFilename(file.originalname)
-      await fs.writeFile(`${this.uploadsDirectory}/${sanitizedFilename}`, image)
+      await fs.writeFile(`${this.uploadsDirectory}/${file.originalname}`, image)
     } catch (error) {
       throw new Error('There was an issue with storing the file' + error)
     }

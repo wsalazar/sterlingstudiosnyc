@@ -1,13 +1,16 @@
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { loginService } from '~/services/login'
-import { navigateTo } from '#imports'
+import { auth as authApi } from '~/services/api'
+import { useUserStore } from '@/stores/user'
+
+const isLoggingOut = ref(false)
+const preservedUserName = ref('')
 
 export const useLogin = () => {
-  // State
   const { isAuthenticated, isAdmin, isLoading } = useAuth()
+  const userStore = useUserStore()
 
-  // Actions
   const login = async (email: string, password: string) => {
     try {
       const response = await loginService.login({
@@ -18,6 +21,7 @@ export const useLogin = () => {
       if (response.success) {
         isAuthenticated.value = true
         isAdmin.value = response.user.admin
+        userStore.setUserName(response.user.name)
         return {
           success: true,
           isAdmin: response.user.admin,
@@ -34,15 +38,20 @@ export const useLogin = () => {
   const logout = async () => {
     if (isLoading) isLoading.value = true
 
-    isAuthenticated.value = false
-    isAdmin.value = false
-
-    if (process.client) {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('name')
+    try {
+      await authApi.logout()
+    } catch (error) {
+      console.error('Backend logout failed:', error)
     }
 
-    await navigateTo('/auth')
+    isAuthenticated.value = false
+    isAdmin.value = false
+    userStore.clearUserName()
+
+    if (process.client) {
+      localStorage.removeItem('sterling_session')
+      localStorage.removeItem('name')
+    }
 
     if (isLoading) {
       isLoading.value = false
@@ -56,6 +65,8 @@ export const useLogin = () => {
     // State
     isLoggedIn,
     isUserAdmin,
+    isLoggingOut,
+    preservedUserName,
 
     // Actions
     login,

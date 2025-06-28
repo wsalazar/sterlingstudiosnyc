@@ -43,11 +43,13 @@ export class DropboxService {
       console.log('Response Status:', response.status)
       console.log('Response Data:', response.data)
 
-      if (!response.data.access_token) {
+      if (!response.data.sterling_session) {
         throw new Error('No access token in response')
       }
 
-      this.dropbox = new Dropbox({ accessToken: response.data.access_token })
+      this.dropbox = new Dropbox({
+        accessToken: response.data.sterling_session,
+      })
     } catch (error) {
       console.error('Full error:', error)
       if (error.response) {

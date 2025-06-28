@@ -53,38 +53,41 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import {navigateTo} from 'nuxt/app'
+import { ref, computed,  } from 'vue'
+import { navigateTo } from 'nuxt/app'
 import { useAuth } from '~/composables/useAuth'
+import { useLogin } from '~/composables/useLogin'
 import { useUserStore } from '@/stores/user'
 
-const { isAuthenticated, isAdmin } = useAuth()
+const { isAuthenticated, isAdmin, isLoading } = useAuth()
+const { logout: logoutUser, isLoggingOut, preservedUserName } = useLogin()
+const userStore = useUserStore()
 
-
-const user = ref('')
 const isOpen = ref<Boolean>(false)
 
-onMounted(() => {
-  const userStore = useUserStore()
-  console.log(userStore.getUserName)
-  user.value = userStore.getUserName
-})
-
-const logout = () => {
-  let userIsAdmin = false;
-  if(isAdmin.value == true) {
-    userIsAdmin = true;
+const user = computed(() => {
+  if (isLoggingOut.value) {
+    return preservedUserName.value || 'Logging out...'
   }
   
-    // localStorage.removeItem('name')
+  if (isAuthenticated.value && !userStore.getUserName) {
+    return ''
+  }
+  return userStore.getUserName || 'Guest'
+})
 
-  // userStore.clearUserName()
-  isAuthenticated.value = false;
-  isAdmin.value = false;
+const logout = async () => {
+  let userIsAdmin = false
+  if (isAdmin.value === true) {
+    userIsAdmin = true
+  }
   
-  user.value = ''
+  preservedUserName.value = userStore.getUserName
+  isLoggingOut.value = true
   isOpen.value = false
-  navigateTo(userIsAdmin ? 'admin/auth' : 'auth')
+  
+  await logoutUser()
+  await navigateTo(userIsAdmin ? 'admin/auth' : 'auth')
 }
 </script>
 

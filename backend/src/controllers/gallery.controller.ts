@@ -73,13 +73,14 @@ export class GalleryController {
       }
       const imageUrls = await Promise.all(
         files.map(async (file) => {
+          file.originalname = sanitizeFilename(file.originalname)
           const image = await this.imageService.createLowResolutionImage(
             file.buffer
           )
-          this.imageService.saveFile(image, file, subdirectory)
+          this.imageService.saveFile(image, file)
 
           const url = await this.cloudProvider.uploadFile(file, subdirectory)
-          return { url, imageName: sanitizeFilename(file.originalname) }
+          return { url, imageName: file.originalname }
         })
       )
 
