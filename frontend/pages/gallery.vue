@@ -139,15 +139,17 @@ import { type ColumnDef } from '@tanstack/vue-table'
 // Add icons to the library
 library.add(faPlus, faTimes)
 
-onMounted(async () => {
+const fetchGalleryData = async () => {
   try {
     const galleries = await fetch.gallery()
     data.value = galleries.data
-    console.log('Fetched data:', data.value)
-    console.log('Columns definition:', columns)
   } catch (error) {
     console.error('Error fetching gallery:', error)
   }
+}
+
+onMounted(async () => {
+  await fetchGalleryData()
 })
 
 interface TableData {
@@ -207,6 +209,8 @@ const removeFile = (index: number) => {
 const handleSubmit = async () => {
   try {
     await upload.image(formData.value)
+
+    // Reset form
     formData.value = {
       name: '',
       description: '',
@@ -214,6 +218,8 @@ const handleSubmit = async () => {
       subdirectory: '',
     }
     renderForm.value = false
+
+    await fetchGalleryData()
   } catch (error) {
     console.error('Error submitting form:', error)
   }
