@@ -9,6 +9,7 @@ import { sanitizeFilename } from '@/utils/helper'
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -21,7 +22,7 @@ import { ConfigService } from '@nestjs/config'
 import { AuthGuard } from '@nestjs/passport'
 import { FilesInterceptor } from '@nestjs/platform-express'
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-import { User } from '@prisma/client'
+import { Gallery, User } from '@prisma/client'
 import { S3Service } from '@/services/s3.service'
 import { CloudProviderService } from '@/services/cloudprovider.service'
 
@@ -62,7 +63,7 @@ export class GalleryController {
       file: GalleryImage[]
       subdirectory: string
     }
-  ) {
+  ): Promise<Gallery> {
     try {
       let subdirectory = galleryData?.subdirectory ?? ''
       if (subdirectory) {
@@ -84,14 +85,18 @@ export class GalleryController {
         })
       )
 
-      const gallery = await this.galleryRepository.createGallery({
+      const totalSize = await this.cloudProvider.getDirectorySize(subdirectory)
+
+      console.log('The total size of the dir is: ', totalSize)
+
+      return await this.galleryRepository.createGallery({
         name: galleryData.name,
         description: galleryData.description,
         images: imageUrls,
         createdBy: user.id,
+        bucketDirectory: subdirectory,
+        totalSize: totalSize,
       })
-
-      return gallery
     } catch (error) {
       throw error
     }
@@ -99,14 +104,29 @@ export class GalleryController {
 
   @Public()
   @Get('/')
-  async getAllGalleries() {
-    return await this.galleryRepository.getAllGalleries()
+  async getAllGalleries(): Promise<Gallery[] | []> {
+    return this.galleryRepository.getAllGalleries()
   }
 
   @Public()
   @Get('/:id')
   async getGallery(@Param('id') id: string) {
     return await this.galleryRepository.getGallery(id)
+  }
+
+  @Public()
+  @Delete('/:id')
+  async deleteGallery(@Param('id') id: string) {
+    try {
+      const gallery = await this.galleryRepository.getGallery(id)
+      const bucketDirectory = gallery.bucketDirectory
+      this.imageService.setSubdirectory(bucketDirectory)
+      await this.imageService.deleteDirectory()
+      await this.cloudProvider.deleteSubdirectory(bucketDirectory)
+      await this.galleryRepository.deleteGallery(id)
+    } catch (error) {
+      throw error
+    }
   }
 
   // @Public()

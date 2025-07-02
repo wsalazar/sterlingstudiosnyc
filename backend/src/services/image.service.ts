@@ -56,4 +56,15 @@ export class ImageService {
       throw new Error('There was an issue with storing the file' + error)
     }
   }
+
+  async deleteDirectory() {
+    try {
+      const lastIndex = this.uploadsDirectory.lastIndexOf('/')
+      const topLevelDirectory = this.uploadsDirectory.substring(0, lastIndex)
+      console.log(this.uploadsDirectory.lastIndexOf('/'))
+      await fs.rmdir(topLevelDirectory, { recursive: true })
+    } catch (error) {
+      throw new Error('Failed to remove directory' + error)
+    }
+  }
 }

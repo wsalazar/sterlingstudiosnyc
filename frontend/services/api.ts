@@ -61,11 +61,33 @@ export const upload = {
       throw error
     }
   },
+  patchImage: async (id: string, images: string[]) => {
+    console.log(id, images)
+    const formData = new FormData()
+    Object.entries(images).forEach(([index, value]) => {
+      formData.append('file', value)
+    })
+    console.log(formData.getAll('file'))
+    // imageData.images.forEach((file) => {
+    //   formData.append('file', file)
+    // })
+    const response = await api.patch(`v1/gallery/${id}`, formData)
+  },
 }
-export const fetch = {
-  gallery: async () => {
+export const gallery = {
+  get: async () => {
     try {
       return await api.get('v1/gallery')
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || error)
+      }
+      throw error
+    }
+  },
+  delete: async (id: string) => {
+    try {
+      return await api.delete(`v1/gallery/${id}`)
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || error)

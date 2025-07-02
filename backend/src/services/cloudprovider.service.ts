@@ -19,4 +19,8 @@ export abstract class CloudProviderService {
     file: Express.Multer.File,
     subdirectory: string
   ): Promise<string>
+
+  abstract deleteSubdirectory(bucketDirectory: string)
+
+  abstract getDirectorySize(bucketDirectory: string)
 }
