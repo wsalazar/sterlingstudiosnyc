@@ -4,6 +4,10 @@ import {
   S3Client,
   PutObjectCommand,
   ListObjectsV2Command,
+  DeleteObjectCommand,
+  ListObjectsCommand,
+  DeleteObjectsCommand,
+  QuoteFields,
 } from '@aws-sdk/client-s3'
 import { sanitizeFilename } from '../utils/helper'
 import axios from 'axios'
@@ -42,7 +46,6 @@ export class S3Service extends CloudProviderService {
 
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
     } catch (error) {
-      console.error('Error uploading to Dropbox:', error)
       if (error.error) {
         console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
       }
@@ -50,24 +53,53 @@ export class S3Service extends CloudProviderService {
     }
   }
 
-  async getDirectorySize(): Promise<number> {
+  async getDirectorySize(bucketDirectory: string): Promise<number> {
+    console.log(bucketDirectory)
     let continuationToken: string | undefined = undefined
     let totalSize = 0
     do {
       const command = new ListObjectsV2Command({
         Bucket: this.s3Bucket,
-        // Prefix: PreconditionFailedException,
+        Prefix: bucketDirectory,
         ContinuationToken: continuationToken,
       })
       const response = await this.s3.send(command)
       if (response.Contents) {
-        totalSize += response.Contents.reduce(
-          (sum, obj) => sum + (obj.Size || 0),
-          0
-        )
+        totalSize += response.Contents.reduce((sum, obj) => {
+          console.log('obj', obj)
+          return sum + (obj.Size || 0)
+        }, 0)
       }
       continuationToken = response.NextContinuationToken
     } while (continuationToken)
+    console.log('total size', totalSize)
     return totalSize
+  }
+
+  async deleteSubdirectory(bucketDirectory: string) {
+    try {
+      const listParematers = {
+        Bucket: this.s3Bucket,
+        Prefix: bucketDirectory,
+      }
+      const list = await this.s3.send(new ListObjectsV2Command(listParematers))
+      if (!list.Contents || list.Contents.length === 0) {
+        throw Error('Folder is empty or does not exist')
+      }
+      if (list.Contents && list.Contents.length > 0) {
+        const listResults = list.Contents.map((obj) => ({ Key: obj.Key }))
+        const deleteParameters = {
+          Bucket: this.s3Bucket,
+          Delete: { Objects: listResults, Quiet: false },
+        }
+        const command = new DeleteObjectsCommand(deleteParameters)
+        await this.s3.send(command)
+      }
+    } catch (error) {
+      if (error.error) {
+        console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
+      }
+      throw new Error(`Failed to delete file: ${error.message}`)
+    }
   }
 }

@@ -29,6 +29,7 @@ model Gallery {
   bucketDirectory   String?
   images            Image[]
   user              User     @relation(fields: [createdBy], references: [id])
+  totalSize         Int
   createdBy         String
   createAt          DateTime @default(now())
   updatedAt         DateTime @default(now())
@@ -37,7 +38,7 @@ model Gallery {
 model Image {
   id          String @id @default(uuid())
   url         String
-  gallery     Gallery @relation(fields: [galleryId], references: [id])
+  gallery     Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   galleryId   String
   imageName   String
   createAt    DateTime @default(now())

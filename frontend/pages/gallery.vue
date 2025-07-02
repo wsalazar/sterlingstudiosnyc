@@ -1,13 +1,18 @@
 <template>
   <div class="p-4">
     <div v-if="userIsAdmin" class="p-4 mt-4 bg-gray-100">
-      <a @click="renderForm = true" class="cursor-pointer">
+      <a @click="openModal" class="cursor-pointer">
         <font-awesome-icon
           :icon="['fas', 'plus']"
           class="w-5 h-5 text-gray-400"
         />
       </a>
-      <DataTable :data="transformedData" :columns="columns" />
+      <DataTable
+        :data="transformedData"
+        :columns="columns"
+        @record-deleted="fetchGalleryData"
+        @show-overlay="editImages"
+      />
     </div>
   </div>
   <div v-if="!userIsAdmin">non-admin</div>
@@ -16,15 +21,16 @@
     v-if="renderForm"
     class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
+    {{ console.log(renderForm, editMode) }}
     <div
       class="relative top-20 p-5 mx-auto w-96 bg-white rounded-md border shadow-lg"
     >
       <div class="mt-3">
         <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
-          Add New Gallery Item
+          {{ editMode ? 'Edit Gallery Item' : 'Add New Gallery Item' }}
         </h3>
         <form @submit.prevent="handleSubmit" class="space-y-4">
-          <div>
+          <div v-if="editMode === false">
             <label for="name" class="block text-sm font-medium text-gray-700"
               >Name</label
             >
@@ -37,7 +43,7 @@
               placeholder="Enter name"
             />
           </div>
-          <div>
+          <div v-if="editMode === false">
             <label for="name" class="block text-sm font-medium text-gray-700"
               >Subdirectory</label
             >
@@ -50,7 +56,7 @@
             />
           </div>
 
-          <div>
+          <div v-if="editMode === false">
             <label
               for="description"
               class="block text-sm font-medium text-gray-700"
@@ -74,12 +80,34 @@
               type="file"
               id="images"
               multiple
-              required
+              :required="editMode === false"
               accept="image/*"
               @change="handleImageUpload"
               class="block mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            <!-- Preview selected files -->
+            <div v-if="editMode === true">
+              <p class="mb-2 text-sm text-gray-500">Selected files:</p>
+              <ul class="space-y-1">
+                <li
+                  v-for="(name, index) in imagesToEdit"
+                  :key="index"
+                  class="flex justify-between items-center text-sm text-gray-600"
+                >
+                  <span class="truncate">{{ name }}</span>
+                  <button
+                    type="button"
+                    @click="removeFile(index)"
+                    class="text-red-500 hover:text-red-700"
+                  >
+                    <font-awesome-icon
+                      :icon="['fas', 'times']"
+                      class="w-4 h-4"
+                    />
+                  </button>
+                </li>
+              </ul>
+            </div>
+
             <div v-if="formData.images.length > 0" class="mt-2">
               <p class="mb-2 text-sm text-gray-500">Selected files:</p>
               <ul class="space-y-1">
@@ -129,19 +157,21 @@
 const { isAdmin } = useAuth()
 const userIsAdmin = isAdmin.value
 const renderForm = ref(false)
+const editMode = ref(false)
+const imagesToEdit = ref<string[]>([])
+const editUuId = ref('')
 
-import { upload, fetch } from '../services/api'
+import { upload, gallery } from '../services/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { type ColumnDef } from '@tanstack/vue-table'
 
-// Add icons to the library
 library.add(faPlus, faTimes)
 
 const fetchGalleryData = async () => {
   try {
-    const galleries = await fetch.gallery()
+    const galleries = await gallery.get()
     data.value = galleries.data
   } catch (error) {
     console.error('Error fetching gallery:', error)
@@ -152,24 +182,51 @@ onMounted(async () => {
   await fetchGalleryData()
 })
 
+const openModal = () => {
+  console.log('test')
+  renderForm.value = true
+  editMode.value = false
+}
+
+const editImages = (row: any) => {
+  editMode.value = true
+  renderForm.value = true
+  imagesToEdit.value = row.original.images.split(',')
+  editUuId.value = row.original.id
+}
+
 interface TableData {
   id: number
   name: string
   description: string
-  user?: { name: string }
-  createAt?: string
-  gallerySpace?: string
+  user: { name: string }
+  createAt: string
+  totalSize: number
+  images: { imageName: string; url: string }[]
 }
 
 const data = ref<TableData[]>([])
 
 const transformedData = computed(() => {
+  console.log(data.value)
   return data.value.map((item) => ({
     ...item,
     userDisplay: item.user?.name || 'No name',
+    totalSize: `${(item.totalSize / (1024 * 1024)).toFixed(2)} MB`,
+    images: item.images.map((image) => image.imageName).join(','),
     createAt: item.createAt
       ? new Date(item.createAt).toLocaleDateString()
       : 'No date',
+    subdirectory: Array.from(
+      new Set(
+        item.images
+          .map((image) => {
+            const match = image.url.match(/\.com\/(.+)\/[^/]+$/)
+            return match ? match[1] : ''
+          })
+          .filter(Boolean)
+      )
+    ).join(', '),
   }))
 })
 
@@ -203,12 +260,20 @@ const handleImageUpload = (event: Event) => {
 }
 
 const removeFile = (index: number) => {
-  formData.value.images.splice(index, 1)
+  if (editMode.value) {
+    imagesToEdit.value.splice(index, 1)
+  } else {
+    formData.value.images.splice(index, 1)
+  }
 }
 
 const handleSubmit = async () => {
   try {
-    await upload.image(formData.value)
+    if (editMode.value) {
+      upload.patchImage(editUuId.value, imagesToEdit.value)
+    } else {
+      await upload.image(formData.value)
+    }
 
     // Reset form
     formData.value = {
@@ -239,12 +304,24 @@ const columns: ColumnDef<TableData>[] = [
     header: 'User',
   },
   {
-    accessorKey: 'gallerySpace',
+    accessorKey: 'images',
+    header: 'Images',
+  },
+  {
+    accessorKey: 'subdirectory',
+    header: 'Subdirectory',
+  },
+  {
+    accessorKey: 'totalSize',
     header: 'Gallery Space',
   },
   {
     accessorKey: 'createAt',
     header: 'Date Uploaded',
+  },
+  {
+    accessorKey: 'delete',
+    header: 'Delete',
   },
 ]
 

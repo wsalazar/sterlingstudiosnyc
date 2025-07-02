@@ -10,7 +10,9 @@ export class GalleryRepository {
     description: string
     images?: { url: string; imageName: string }[]
     createdBy: string
-  }) {
+    bucketDirectory: string
+    totalSize: number
+  }): Promise<Gallery> {
     return await this.prisma.gallery.create({
       data: {
         name: galleryData.name,
@@ -21,6 +23,8 @@ export class GalleryRepository {
             }
           : undefined,
         createdBy: galleryData.createdBy,
+        bucketDirectory: galleryData.bucketDirectory,
+        totalSize: galleryData.totalSize,
       },
       include: {
         images: true,
@@ -34,6 +38,13 @@ export class GalleryRepository {
       include: {
         images: true,
       },
+    })
+  }
+
+  async deleteGallery(id: string) {
+    await this.prisma.gallery.delete({
+      where: { id: id },
+      include: { images: true },
     })
   }
 

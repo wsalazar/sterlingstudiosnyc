@@ -73,7 +73,7 @@ export class AdminController {
         throw error
       }
       throw new HttpException(
-        'Failed to create admin user',
+        'Failed to create admin user:' + error,
         HttpStatus.INTERNAL_SERVER_ERROR
       )
     }

@@ -22,7 +22,9 @@
         <button
           v-for="column in table
             .getAllColumns()
-            .filter((col) => col.getCanFilter())"
+            .filter(
+              (col) => col.getCanFilter() && col.columnDef.header !== 'Delete'
+            )"
           :key="column.id"
           @click="column.toggleSorting()"
           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50"
@@ -31,7 +33,9 @@
             :icon="['fas', getSortIcon(column)]"
             class="mr-2 w-4 h-4"
           />
-          {{ column.columnDef.header }}
+          <span v-if="column.columnDef.header !== 'Delete'">{{
+            column.columnDef.header
+          }}</span>
         </button>
       </div>
     </div>
@@ -69,17 +73,44 @@
         </thead>
         <tbody>
           <tr
-            v-for="row in table.getRowModel().rows"
+            v-for="(row, rowIndex) in table.getRowModel().rows"
             :key="row.id"
             class="bg-white border-b hover:bg-gray-50"
           >
             <td
-              v-for="cell in row.getVisibleCells()"
+              v-for="(cell, cellIndex) in row.getVisibleCells()"
               :key="cell.id"
-              class="px-6 py-4"
+              :class="{ 'px-6 py-4': cell.column.id !== 'delete' }"
+              @click="setEditMode(row, cell)"
             >
-              {{ cell.renderValue() }}
-              <!-- Debug: {{ cell.column.id }} - {{ typeof cell.renderValue() }} -->
+              <input
+                v-if="editingCellKey === getCellKey(row, cell)"
+                class="p-2 rounded-md border border-gray-300"
+                v-model="editValue"
+                @blur="saveEdit(rowIndex, cellIndex)"
+                @keyup.enter="saveEdit(rowIndex, cellIndex)"
+                @keyup.esc="cancelEdit"
+                ref="editInput"
+              />
+              <span v-else>
+                <span
+                  v-if="cell.column.id === 'delete'"
+                  class="flex justify-center items-center w-full h-full text-center text-red-500 cursor-pointer"
+                  @click="deleteRecord(row)"
+                >
+                  <font-awesome-icon :icon="['fas', 'x']" class="w-4 h-4" />
+                </span>
+                <span
+                  v-else-if="cell.column.id === 'images'"
+                  class="cursor-pointer text-[#f59e0b]"
+                  @click="editImages(row)"
+                >
+                  Click to Edit
+                </span>
+                <span v-else>
+                  {{ cell.renderValue() }}
+                </span>
+              </span>
             </td>
           </tr>
         </tbody>
@@ -153,6 +184,7 @@ import {
   type ColumnDef,
 } from '@tanstack/vue-table'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { gallery } from '../services/api'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
   faSearch,
@@ -166,9 +198,9 @@ import {
   faFilter,
   faTimes,
   faPlus,
+  faX,
 } from '@fortawesome/free-solid-svg-icons'
 
-// Add icons to the library
 library.add(
   faSearch,
   faSort,
@@ -180,29 +212,71 @@ library.add(
   faChevronUp,
   faFilter,
   faTimes,
-  faPlus
+  faPlus,
+  faX
 )
 
 const props = defineProps<{
   data: any[]
   columns: ColumnDef<any>[]
 }>()
-console.log('props', props)
 const globalFilter = ref('')
 const pageSize = ref(10)
+const editValue = ref('')
+const editingCellKey = ref<string | null>(null)
 
 const getSortIcon = (column: any) => {
   if (!column.getIsSorted()) return 'sort'
   return column.getIsSorted() === 'asc' ? 'sort-up' : 'sort-down'
 }
 
+const saveEdit = (rowIndex: number, cellIndex: number) => {
+  console.log('saveEdit', rowIndex, cellIndex)
+}
+
+const cancelEdit = () => {
+  editingCellKey.value = null
+  editValue.value = ''
+}
+
+const emit = defineEmits<{
+  'record-deleted': []
+  'show-overlay': [any]
+}>()
+
+const deleteRecord = async (row: any) => {
+  console.log(row.original.id)
+  await gallery.delete(row.original.id)
+  emit('record-deleted')
+}
+
+const editImages = (row: any) => {
+  emit('show-overlay', row)
+}
+
+const getCellKey = (row: any, cell: any) => `${row.id}_${cell.column.id}`
+
+const isCellEditable = (cell: any) =>
+  ![
+    'createAt',
+    'user_name',
+    'totalSize',
+    'delete',
+    'subdirectory',
+    'images',
+  ].includes(cell.column.id)
+
+const setEditMode = (row: any, cell: any) => {
+  if (!isCellEditable(cell)) return
+  editingCellKey.value = getCellKey(row, cell)
+  editValue.value = row.original[cell.column.id]
+}
+
 const table = useVueTable({
   get data() {
-    console.log('Table data:', props.data)
     return props.data
   },
   get columns() {
-    console.log('Table columns:', props.columns)
     return props.columns
   },
   getCoreRowModel: getCoreRowModel(),
