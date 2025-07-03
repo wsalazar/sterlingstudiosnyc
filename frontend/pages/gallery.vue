@@ -21,7 +21,6 @@
     v-if="renderForm"
     class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
-    {{ console.log(renderForm, editMode) }}
     <div
       class="relative top-20 p-5 mx-auto w-96 bg-white rounded-md border shadow-lg"
     >
@@ -86,7 +85,9 @@
               class="block mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             <div v-if="editMode === true">
-              <p class="mb-2 text-sm text-gray-500">Selected files:</p>
+              <p class="mt-2 mb-2 text-sm font-bold text-gray-500">
+                Gallery files:
+              </p>
               <ul class="space-y-1">
                 <li
                   v-for="(name, index) in imagesToEdit"
@@ -96,7 +97,7 @@
                   <span class="truncate">{{ name }}</span>
                   <button
                     type="button"
-                    @click="removeFile(index)"
+                    @click="removeGalleryFiles(index)"
                     class="text-red-500 hover:text-red-700"
                   >
                     <font-awesome-icon
@@ -109,7 +110,9 @@
             </div>
 
             <div v-if="formData.images.length > 0" class="mt-2">
-              <p class="mb-2 text-sm text-gray-500">Selected files:</p>
+              <p class="mt-2 mb-2 text-sm font-bold text-gray-500">
+                Selected files:
+              </p>
               <ul class="space-y-1">
                 <li
                   v-for="(file, index) in formData.images"
@@ -259,18 +262,20 @@ const handleImageUpload = (event: Event) => {
   }
 }
 
+const removeGalleryFiles = (index: number) => {
+  imagesToEdit.value.splice(index, 1)
+}
+
 const removeFile = (index: number) => {
-  if (editMode.value) {
-    imagesToEdit.value.splice(index, 1)
-  } else {
-    formData.value.images.splice(index, 1)
-  }
+  formData.value.images.splice(index, 1)
 }
 
 const handleSubmit = async () => {
   try {
     if (editMode.value) {
-      upload.patchImage(editUuId.value, imagesToEdit.value)
+      const { images } = formData.value
+      console.log('images', images)
+      upload.patchImage(editUuId.value, imagesToEdit.value, images)
     } else {
       await upload.image(formData.value)
     }
@@ -317,7 +322,7 @@ const columns: ColumnDef<TableData>[] = [
   },
   {
     accessorKey: 'createAt',
-    header: 'Date Uploaded',
+    header: 'Date Modified',
   },
   {
     accessorKey: 'delete',
