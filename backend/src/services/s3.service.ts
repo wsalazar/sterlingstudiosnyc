@@ -76,6 +76,8 @@ export class S3Service extends CloudProviderService {
     return totalSize
   }
 
+  async removeImageObjectFromS3(bucketDirectory: string) {}
+
   async deleteSubdirectory(bucketDirectory: string) {
     try {
       const listParematers = {

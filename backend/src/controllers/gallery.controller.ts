@@ -13,6 +13,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   UploadedFiles,
   UseGuards,
@@ -25,6 +26,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import { Gallery, User } from '@prisma/client'
 import { S3Service } from '@/services/s3.service'
 import { CloudProviderService } from '@/services/cloudprovider.service'
+import { generateKey } from 'crypto'
 
 interface GalleryImage {
   lastModified: number
@@ -52,7 +54,7 @@ export class GalleryController {
   ) {}
 
   @Post('/')
-  @UseInterceptors(FilesInterceptor('file', 10))
+  @UseInterceptors(FilesInterceptor('file', 100))
   async createGallery(
     @UploadedFiles() files: Express.Multer.File[],
     @GetUser() user: User,
@@ -66,10 +68,18 @@ export class GalleryController {
   ): Promise<Gallery> {
     try {
       let subdirectory = galleryData?.subdirectory ?? ''
+      console.log('this is the sub dir', subdirectory)
       if (subdirectory) {
         if (!subdirectory.endsWith('/')) {
+          console.log('it does not end with a !')
+
           subdirectory = `${galleryData.subdirectory.trim()}/`
-          this.imageService.setSubdirectory(subdirectory)
+          console.log('set subdir', subdirectory)
+          try {
+            await this.imageService.setSubdirectory(subdirectory)
+          } catch (error) {
+            console.log('is ther ean error here?', error)
+          }
         }
       }
       const imageUrls = await Promise.all(
@@ -78,6 +88,7 @@ export class GalleryController {
           const image = await this.imageService.createLowResolutionImage(
             file.buffer
           )
+          console.log('save file', image, file)
           this.imageService.saveFile(image, file)
 
           const url = await this.cloudProvider.uploadFile(file, subdirectory)
@@ -127,6 +138,32 @@ export class GalleryController {
     } catch (error) {
       throw error
     }
+  }
+
+  @Public()
+  @Patch('/:id')
+  @UseInterceptors(FilesInterceptor('selectedImage', 10))
+  async updateImages(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body()
+    gallery: {
+      galleryImage: string[]
+    },
+    @Param('id') galleryId: string
+  ) {
+    const galleries = await this.galleryRepository.getGallery(galleryId)
+    const images = galleries.images.map((image) => image.imageName)
+    const imageToRemove = images.filter(
+      (img) => !gallery.galleryImage.includes(img)
+    )
+    this.imageService.setSubdirectory(galleries.bucketDirectory)
+    // await this.imageService.deleteImagesFromDirectory(imageToRemove)
+    // await this.galleryRepository.deleteGalleryEntry(galleryId, imageToRemove)
+    await this.cloudProvider.removeImageObjectFromS3(galleries.bucketDirectory)
+
+    // const notInImages = galleryImageArr.filter((img) => !images.includes(img))
+    // console.log(galleryImages, images, notInImages)
+    // console.log(id, files, galleryImages, gallery, images)
   }
 
   // @Public()
