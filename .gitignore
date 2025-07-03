@@ -3,3 +3,4 @@ node_modules/
 frontend/.nuxt/
 backend/.env
 backend/dist
+backend/public

@@ -15,25 +15,32 @@ export class ImageService {
 
   async setUploadsDirectory(subdirectory: string = '') {
     this.uploadsDirectory = path.join(
-      __dirname + '/../../',
+      process.cwd(),
       'public',
       'uploads',
       ...subdirectory.split('/')
     )
+    console.log('this is the new uploads path', this.uploadsDirectory)
   }
 
   async ensureUploadsDirectoryExists() {
     try {
       await fs.access(this.uploadsDirectory)
     } catch {
-      fs.mkdir(this.uploadsDirectory, { recursive: true })
+      await fs.mkdir(this.uploadsDirectory, {
+        recursive: true,
+      })
     }
   }
 
   async setSubdirectory(subdirectory) {
     this.subdirectory = subdirectory
     await this.setUploadsDirectory(subdirectory)
-    await this.ensureUploadsDirectoryExists()
+    try {
+      await this.ensureUploadsDirectoryExists()
+    } catch (error) {
+      throw error
+    }
   }
 
   async createLowResolutionImage(buffer: Buffer): Promise<Buffer> {
@@ -51,6 +58,7 @@ export class ImageService {
 
   async saveFile(image: Buffer, file: Express.Multer.File) {
     try {
+      console.log(`${this.uploadsDirectory}/${file.originalname}`, image)
       await fs.writeFile(`${this.uploadsDirectory}/${file.originalname}`, image)
     } catch (error) {
       throw new Error('There was an issue with storing the file' + error)
@@ -66,5 +74,15 @@ export class ImageService {
     } catch (error) {
       throw new Error('Failed to remove directory' + error)
     }
+  }
+
+  async deleteImagesFromDirectory(files: string[]) {
+    try {
+      await Promise.all(
+        files.map((file: string) => {
+          fs.rm(this.uploadsDirectory + file)
+        })
+      )
+    } catch (erro) {}
   }
 }
