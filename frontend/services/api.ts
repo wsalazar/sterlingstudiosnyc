@@ -53,6 +53,7 @@ export const upload = {
       const response = await api.post('v1/gallery', formData)
       return response.data
     } catch (error) {
+      console.log(error)
       if (axios.isAxiosError(error)) {
         throw new Error(
           error.response?.data?.message || 'Failed to upload images'
@@ -61,13 +62,29 @@ export const upload = {
       throw error
     }
   },
-  patchImage: async (id: string, images: string[]) => {
-    console.log(id, images)
+  patchImage: async (
+    id: string,
+    galleryImages: string[],
+    selectedImages: File[]
+  ) => {
+    console.log(id, galleryImages)
     const formData = new FormData()
-    Object.entries(images).forEach(([index, value]) => {
-      formData.append('file', value)
+    Object.entries(galleryImages).forEach(([index, value]) => {
+      formData.append('galleryImage', value)
     })
-    console.log(formData.getAll('file'))
+    Object.entries(selectedImages).forEach(([index, value]) => {
+      formData.append('selectedImage', value)
+    })
+    console.log(
+      formData.getAll('galleryImage'),
+      formData.getAll('selectedImage')
+    )
+    /**
+     * I don't think i'll be able to delete. Because I don't have the actual images. Just the names of the images.
+     * So I'll have to take a diff what I have stored locally and what has been removed. Then cache in a var what
+     *  has been removed and remove it locally and in the s3 bucket.
+     * After add any new images that have been added.
+     */
     // imageData.images.forEach((file) => {
     //   formData.append('file', file)
     // })

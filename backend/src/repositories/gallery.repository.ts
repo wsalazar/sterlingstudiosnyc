@@ -41,6 +41,12 @@ export class GalleryRepository {
     })
   }
 
+  async deleteGalleryEntry(galleryId: string, images: string[]) {
+    await this.prisma.image.deleteMany({
+      where: { galleryId, imageName: { in: images } },
+    })
+  }
+
   async deleteGallery(id: string) {
     await this.prisma.gallery.delete({
       where: { id: id },
