@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaClient, Gallery } from '@prisma/client'
 
 @Injectable()
@@ -32,6 +32,29 @@ export class GalleryRepository {
     })
   }
 
+  async updateGallery(
+    galleryId: string,
+    galleryData: {
+      images?: { url: string; imageName: string }[]
+      totalSize: number
+    }
+  ) {
+    return await this.prisma.gallery.update({
+      data: {
+        images: galleryData.images
+          ? {
+              create: galleryData.images,
+            }
+          : undefined,
+        totalSize: galleryData.totalSize,
+      },
+      include: {
+        images: true,
+      },
+      where: { id: galleryId },
+    })
+  }
+
   async getGallery(id: string) {
     return await this.prisma.gallery.findUnique({
       where: { id },
@@ -39,6 +62,25 @@ export class GalleryRepository {
         images: true,
       },
     })
+  }
+
+  async updateGalleryFields(
+    galleryId: string,
+    gallery: { fieldName: string; newValue: string }
+  ) {
+    try {
+      await this.prisma.gallery.update({
+        where: { id: galleryId },
+        data: {
+          [gallery.fieldName]: gallery.newValue,
+        },
+      })
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Record could not be found')
+      }
+      throw error
+    }
   }
 
   async deleteGalleryEntry(galleryId: string, images: string[]) {

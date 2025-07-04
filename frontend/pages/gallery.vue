@@ -12,6 +12,7 @@
         :columns="columns"
         @record-deleted="fetchGalleryData"
         @show-overlay="editImages"
+        @update-cell="editCell"
       />
     </div>
   </div>
@@ -176,6 +177,7 @@ const fetchGalleryData = async () => {
   try {
     const galleries = await gallery.get()
     data.value = galleries.data
+    console.log(data.value)
   } catch (error) {
     console.error('Error fetching gallery:', error)
   }
@@ -189,6 +191,17 @@ const openModal = () => {
   console.log('test')
   renderForm.value = true
   editMode.value = false
+}
+
+const editCell = async (row: any, newValue: string, fieldName: string) => {
+  console.log(row.original.id, newValue, fieldName)
+  const data = {
+    newValue,
+    fieldName,
+  }
+  console.log(data)
+  await gallery.patch(row.original.id, data)
+  await fetchGalleryData()
 }
 
 const editImages = (row: any) => {
@@ -274,8 +287,7 @@ const handleSubmit = async () => {
   try {
     if (editMode.value) {
       const { images } = formData.value
-      console.log('images', images)
-      upload.patchImage(editUuId.value, imagesToEdit.value, images)
+      await upload.patchImage(editUuId.value, imagesToEdit.value, images)
     } else {
       await upload.image(formData.value)
     }

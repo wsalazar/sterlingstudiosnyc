@@ -20,7 +20,6 @@ export class ImageService {
       'uploads',
       ...subdirectory.split('/')
     )
-    console.log('this is the new uploads path', this.uploadsDirectory)
   }
 
   async ensureUploadsDirectoryExists() {
@@ -76,11 +75,11 @@ export class ImageService {
     }
   }
 
-  async deleteImagesFromDirectory(files: string[]) {
+  async deleteLowResolutionImagesFromDirectory(files: string[]) {
     try {
       await Promise.all(
         files.map((file: string) => {
-          fs.rm(this.uploadsDirectory + file)
+          fs.rm(`${this.uploadsDirectory}/${file}`)
         })
       )
     } catch (erro) {}

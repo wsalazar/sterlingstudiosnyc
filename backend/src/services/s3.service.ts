@@ -54,7 +54,7 @@ export class S3Service extends CloudProviderService {
   }
 
   async getDirectorySize(bucketDirectory: string): Promise<number> {
-    console.log(bucketDirectory)
+    // console.log(bucketDirectory)
     let continuationToken: string | undefined = undefined
     let totalSize = 0
     do {
@@ -66,17 +66,35 @@ export class S3Service extends CloudProviderService {
       const response = await this.s3.send(command)
       if (response.Contents) {
         totalSize += response.Contents.reduce((sum, obj) => {
-          console.log('obj', obj)
+          // console.log('obj', obj)
           return sum + (obj.Size || 0)
         }, 0)
       }
       continuationToken = response.NextContinuationToken
     } while (continuationToken)
-    console.log('total size', totalSize)
+    // console.log('total size', totalSize)
     return totalSize
   }
 
-  async removeImageObjectFromS3(bucketDirectory: string) {}
+  async removeImageObjectFromS3(bucketDirectory: string, images: string[]) {
+    try {
+      const objectsToDelete = images.map((fileName) => ({
+        Key: `${bucketDirectory}${fileName}`,
+      }))
+      console.log(objectsToDelete)
+      const deleteParams = {
+        Bucket: this.s3Bucket,
+        Delete: {
+          Objects: objectsToDelete,
+          Quiet: false,
+        },
+      }
+      const command = new DeleteObjectsCommand(deleteParams)
+      await this.s3.send(command)
+    } catch (error) {
+      throw error
+    }
+  }
 
   async deleteSubdirectory(bucketDirectory: string) {
     try {

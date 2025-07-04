@@ -67,7 +67,6 @@ export const upload = {
     galleryImages: string[],
     selectedImages: File[]
   ) => {
-    console.log(id, galleryImages)
     const formData = new FormData()
     Object.entries(galleryImages).forEach(([index, value]) => {
       formData.append('galleryImage', value)
@@ -75,20 +74,15 @@ export const upload = {
     Object.entries(selectedImages).forEach(([index, value]) => {
       formData.append('selectedImage', value)
     })
-    console.log(
-      formData.getAll('galleryImage'),
-      formData.getAll('selectedImage')
-    )
+
     /**
      * I don't think i'll be able to delete. Because I don't have the actual images. Just the names of the images.
      * So I'll have to take a diff what I have stored locally and what has been removed. Then cache in a var what
      *  has been removed and remove it locally and in the s3 bucket.
      * After add any new images that have been added.
      */
-    // imageData.images.forEach((file) => {
-    //   formData.append('file', file)
-    // })
-    const response = await api.patch(`v1/gallery/${id}`, formData)
+
+    await api.patch(`v1/gallery/${id}`, formData)
   },
 }
 export const gallery = {
@@ -111,6 +105,9 @@ export const gallery = {
       }
       throw error
     }
+  },
+  patch: async (id: string, data: { newValue: string; fieldName: string }) => {
+    await api.patch(`v1/gallery/update-fields/${id}`, data)
   },
 }
 
