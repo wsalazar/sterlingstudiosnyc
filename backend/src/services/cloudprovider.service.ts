@@ -23,5 +23,5 @@ export abstract class CloudProviderService {
   abstract deleteSubdirectory(bucketDirectory: string)
 
   abstract getDirectorySize(bucketDirectory: string)
-  abstract removeImageObjectFromS3(bucketDirectory: string)
+  abstract removeImageObjectFromS3(bucketDirectory: string, images: string[])
 }

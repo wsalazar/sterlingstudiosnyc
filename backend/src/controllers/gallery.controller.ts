@@ -18,15 +18,18 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  Res,
+  createParamDecorator,
+  ExecutionContext,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { AuthGuard } from '@nestjs/passport'
 import { FilesInterceptor } from '@nestjs/platform-express'
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import { Gallery, User } from '@prisma/client'
 import { S3Service } from '@/services/s3.service'
 import { CloudProviderService } from '@/services/cloudprovider.service'
 import { generateKey } from 'crypto'
+import { Response } from 'express'
 
 interface GalleryImage {
   lastModified: number
@@ -98,8 +101,6 @@ export class GalleryController {
 
       const totalSize = await this.cloudProvider.getDirectorySize(subdirectory)
 
-      console.log('The total size of the dir is: ', totalSize)
-
       return await this.galleryRepository.createGallery({
         name: galleryData.name,
         description: galleryData.description,
@@ -141,8 +142,28 @@ export class GalleryController {
   }
 
   @Public()
+  @Patch('/update-fields/:id')
+  async updateFields(
+    @Body()
+    gallery: {
+      newValue: string
+      fieldName: string
+    },
+    @Param('id') galleryId: string,
+    @Res() res: Response
+  ) {
+    try {
+      console.log(gallery)
+      await this.galleryRepository.updateGalleryFields(galleryId, gallery)
+      return res.status(200).json({ message: 'Success' })
+    } catch (error) {
+      return res.status(error.status).json({ message: error.message })
+    }
+  }
+
+  @Public()
   @Patch('/:id')
-  @UseInterceptors(FilesInterceptor('selectedImage', 10))
+  @UseInterceptors(FilesInterceptor('selectedImage', 100))
   async updateImages(
     @UploadedFiles() files: Express.Multer.File[],
     @Body()
@@ -151,19 +172,61 @@ export class GalleryController {
     },
     @Param('id') galleryId: string
   ) {
-    const galleries = await this.galleryRepository.getGallery(galleryId)
-    const images = galleries.images.map((image) => image.imageName)
-    const imageToRemove = images.filter(
-      (img) => !gallery.galleryImage.includes(img)
-    )
-    this.imageService.setSubdirectory(galleries.bucketDirectory)
-    // await this.imageService.deleteImagesFromDirectory(imageToRemove)
-    // await this.galleryRepository.deleteGalleryEntry(galleryId, imageToRemove)
-    await this.cloudProvider.removeImageObjectFromS3(galleries.bucketDirectory)
+    try {
+      const galleryItems = await this.galleryRepository.getGallery(galleryId)
+      const images = galleryItems.images.map((image) => image.imageName)
+      const imageToRemove = images.filter(
+        (img) => !gallery.galleryImage.includes(img)
+      )
+      this.imageService.setSubdirectory(galleryItems.bucketDirectory)
 
-    // const notInImages = galleryImageArr.filter((img) => !images.includes(img))
-    // console.log(galleryImages, images, notInImages)
-    // console.log(id, files, galleryImages, gallery, images)
+      if (imageToRemove.length > 0) {
+        await this.imageService.deleteLowResolutionImagesFromDirectory(
+          imageToRemove
+        )
+        await this.galleryRepository.deleteGalleryEntry(
+          galleryId,
+          imageToRemove
+        )
+        /**
+         * I should not have to send the bucket directory. The object should know of it's existence
+         * Or maybe inject the Image Service inot the Cloud Provider?
+         */
+        await this.cloudProvider.removeImageObjectFromS3(
+          galleryItems.bucketDirectory,
+          imageToRemove
+        )
+      }
+      /**
+       * todo this code is the same as when we create a gallery
+       * we need to place this in the gallery repository
+       */
+      const imageUrls = await Promise.all(
+        files.map(async (file) => {
+          file.originalname = sanitizeFilename(file.originalname)
+          const image = await this.imageService.createLowResolutionImage(
+            file.buffer
+          )
+          this.imageService.saveFile(image, file)
+
+          const url = await this.cloudProvider.uploadFile(
+            file,
+            galleryItems.bucketDirectory
+          )
+          return { url, imageName: file.originalname }
+        })
+      )
+      const totalSize = await this.cloudProvider.getDirectorySize(
+        galleryItems.bucketDirectory
+      )
+
+      await this.galleryRepository.updateGallery(galleryItems.id, {
+        images: imageUrls,
+        totalSize: totalSize,
+      })
+    } catch (error) {
+      throw error
+    }
   }
 
   // @Public()

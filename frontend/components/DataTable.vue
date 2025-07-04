@@ -87,8 +87,8 @@
                 v-if="editingCellKey === getCellKey(row, cell)"
                 class="p-2 rounded-md border border-gray-300"
                 v-model="editValue"
-                @blur="saveEdit(rowIndex, cellIndex)"
-                @keyup.enter="saveEdit(rowIndex, cellIndex)"
+                @blur="saveEdit(row, cell.column.id)"
+                @keyup.enter="saveEdit(row, cell.column.id)"
                 @keyup.esc="cancelEdit"
                 ref="editInput"
               />
@@ -230,10 +230,6 @@ const getSortIcon = (column: any) => {
   return column.getIsSorted() === 'asc' ? 'sort-up' : 'sort-down'
 }
 
-const saveEdit = (rowIndex: number, cellIndex: number) => {
-  console.log('saveEdit', rowIndex, cellIndex)
-}
-
 const cancelEdit = () => {
   editingCellKey.value = null
   editValue.value = ''
@@ -242,13 +238,24 @@ const cancelEdit = () => {
 const emit = defineEmits<{
   'record-deleted': []
   'show-overlay': [any]
+  'update-cell': [row: any, cellValue: string, fieldName: string]
 }>()
 
+const saveEdit = (row: any, fieldName: string) => {
+  if (editValue.value.length === 0) {
+    //todo will have to throw an warning or a toaster
+    editingCellKey.value = null
+    return
+  }
+  emit('update-cell', row, editValue.value, fieldName)
+  editingCellKey.value = null
+}
 const deleteRecord = async (row: any) => {
-  console.log(row.original.id)
   await gallery.delete(row.original.id)
   emit('record-deleted')
 }
+
+const updateInput = (row: any) => {}
 
 const editImages = (row: any) => {
   emit('show-overlay', row)
