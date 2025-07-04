@@ -87,10 +87,10 @@
                 v-if="editingCellKey === getCellKey(row, cell)"
                 class="p-2 rounded-md border border-gray-300"
                 v-model="editValue"
-                @blur="saveEdit(row, cell.column.id)"
-                @keyup.enter="saveEdit(row, cell.column.id)"
+                @blur="onBlur(row, cell.column.id)"
+                @keyup.enter="onEnter(row, cell.column.id)"
+                @keyup.tab="onTab(row, cell.column.id)"
                 @keyup.esc="cancelEdit"
-                ref="editInput"
               />
               <span v-else>
                 <span
@@ -241,15 +241,45 @@ const emit = defineEmits<{
   'update-cell': [row: any, cellValue: string, fieldName: string]
 }>()
 
-const saveEdit = (row: any, fieldName: string) => {
+const skipBlur = ref(false)
+const skipTab = ref(false)
+
+const onTab = (row: any, fieldName: string) => {
   if (editValue.value.length === 0) {
     //todo will have to throw an warning or a toaster
     editingCellKey.value = null
     return
   }
+  if (!skipTab.value) {
+    emit('update-cell', row, editValue.value, fieldName)
+  }
+  editingCellKey.value = null
+}
+
+const onBlur = (row: any, fieldName: string) => {
+  if (editValue.value.length === 0) {
+    //todo will have to throw an warning or a toaster
+    editingCellKey.value = null
+    return
+  }
+  if (!skipBlur.value) {
+    emit('update-cell', row, editValue.value, fieldName)
+  }
+  editingCellKey.value = null
+}
+
+const onEnter = (row: any, fieldName: string) => {
+  if (editValue.value.length === 0) {
+    //todo will have to throw an warning or a toaster
+    editingCellKey.value = null
+    return
+  }
+  skipBlur.value = true
+  skipTab.value = true
   emit('update-cell', row, editValue.value, fieldName)
   editingCellKey.value = null
 }
+
 const deleteRecord = async (row: any) => {
   await gallery.delete(row.original.id)
   emit('record-deleted')
