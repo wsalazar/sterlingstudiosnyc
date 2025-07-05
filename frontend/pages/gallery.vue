@@ -177,7 +177,6 @@ const fetchGalleryData = async () => {
   try {
     const galleries = await gallery.get()
     data.value = galleries.data
-    console.log(data.value)
   } catch (error) {
     console.error('Error fetching gallery:', error)
   }
@@ -188,7 +187,6 @@ onMounted(async () => {
 })
 
 const openModal = () => {
-  console.log('test')
   renderForm.value = true
   editMode.value = false
 }

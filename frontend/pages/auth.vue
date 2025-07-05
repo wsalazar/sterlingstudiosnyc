@@ -257,6 +257,7 @@ const registerForm = ref({
   email: '',
   password: '',
   confirmPassword: '',
+  admin: false,
 })
 
 const handleLogin = async () => {

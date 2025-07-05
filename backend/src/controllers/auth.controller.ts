@@ -15,22 +15,30 @@ import * as bcrypt from 'bcrypt'
 import { Public } from '../decorators/public.decorator'
 import { ConfigService } from '@nestjs/config'
 import { Response } from 'express'
+import { EmailService } from '../services/email.service'
 
 @Controller('v1/auth')
 export class AuthController {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private emailService: EmailService
   ) {}
 
   @Public()
   @Post('user')
   async createAdminUser(
-    @Body() userData: { email: string; password: string; name: string }
+    @Body()
+    userData: {
+      email: string
+      password: string
+      name: string
+      admin: boolean
+    }
   ) {
     try {
-      // Check if user already exists
+      console.log(userData)
       const existingUser = await this.prisma.user.findUnique({
         where: { email: userData.email },
       })
@@ -52,7 +60,7 @@ export class AuthController {
           email: userData.email,
           password: hashedPassword,
           name: userData.name,
-          admin: false,
+          admin: userData.admin,
         },
         select: {
           id: true,
@@ -63,9 +71,17 @@ export class AuthController {
           updatedAt: true,
         },
       })
+      await this.emailService.sendEmail({
+        from: this.configService.get('SMTP_USER'),
+        to: userData.email,
+        subject: 'Welcome',
+        html: '<h1>hi</h1>',
+        text: 'hi',
+      })
 
       return newUser
     } catch (error) {
+      console.log(error)
       if (error instanceof HttpException) {
         throw error
       }

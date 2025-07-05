@@ -71,13 +71,9 @@ export class GalleryController {
   ): Promise<Gallery> {
     try {
       let subdirectory = galleryData?.subdirectory ?? ''
-      console.log('this is the sub dir', subdirectory)
       if (subdirectory) {
         if (!subdirectory.endsWith('/')) {
-          console.log('it does not end with a !')
-
           subdirectory = `${galleryData.subdirectory.trim()}/`
-          console.log('set subdir', subdirectory)
           try {
             await this.imageService.setSubdirectory(subdirectory)
           } catch (error) {
@@ -91,9 +87,7 @@ export class GalleryController {
           const image = await this.imageService.createLowResolutionImage(
             file.buffer
           )
-          console.log('save file', image, file)
           this.imageService.saveFile(image, file)
-
           const url = await this.cloudProvider.uploadFile(file, subdirectory)
           return { url, imageName: file.originalname }
         })
