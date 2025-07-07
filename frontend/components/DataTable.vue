@@ -299,7 +299,7 @@ const isCellEditable = (cell: any) =>
     'user_name',
     'totalSize',
     'delete',
-    'subdirectory',
+    'bucketDirectory',
     'images',
   ].includes(cell.column.id)
 
