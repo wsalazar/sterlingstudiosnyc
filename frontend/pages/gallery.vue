@@ -219,6 +219,7 @@ interface TableData {
   createAt: string
   totalSize: number
   images: { imageName: string; url: string }[]
+  bucketDirectory: string
 }
 
 const data = ref<TableData[]>([])
@@ -233,16 +234,6 @@ const transformedData = computed(() => {
     createAt: item.createAt
       ? new Date(item.createAt).toLocaleDateString()
       : 'No date',
-    subdirectory: Array.from(
-      new Set(
-        item.images
-          .map((image) => {
-            const match = image.url.match(/\.com\/(.+)\/[^/]+$/)
-            return match ? match[1] : ''
-          })
-          .filter(Boolean)
-      )
-    ).join(', '),
   }))
 })
 
@@ -325,7 +316,7 @@ const columns: ColumnDef<TableData>[] = [
     header: 'Images',
   },
   {
-    accessorKey: 'subdirectory',
+    accessorKey: 'bucketDirectory',
     header: 'Subdirectory',
   },
   {
