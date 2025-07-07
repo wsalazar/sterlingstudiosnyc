@@ -141,6 +141,13 @@ export class GalleryController {
     }
   }
 
+  /**
+   * @todo make sure to update the date
+   * @param gallery
+   * @param galleryId
+   * @param res
+   * @returns
+   */
   @Public()
   @Patch('/update-fields/:id')
   async updateFields(
@@ -161,6 +168,12 @@ export class GalleryController {
     }
   }
 
+  /**
+   * @todo make sure to update the date
+   * @param files
+   * @param gallery
+   * @param galleryId
+   */
   @Public()
   @Patch('/:id')
   @UseInterceptors(FilesInterceptor('selectedImage', 100))
@@ -228,23 +241,4 @@ export class GalleryController {
       throw error
     }
   }
-
-  // @Public()
-  // @Post('/:id/images')
-  // @UseInterceptors(FilesInterceptor('file', 10))
-  // async addImagesToGallery(
-  //   @Param('id') id: string,
-  //   @UploadedFiles() files: Express.Multer.File[]
-  // ) {
-  //   // Upload files to Dropbox and get URLs
-  //   const imageUrls = await Promise.all(
-  //     files.map(async (file) => {
-  //       const url = await this.cloudProvider.uploadFile(file)
-  //       return { url, imageName: file.originalname }
-  //     })
-  //   )
-
-  //   // Add images to gallery
-  //   return await this.galleryRepository.addImagesToGallery(id, imageUrls)
-  // }
 }
