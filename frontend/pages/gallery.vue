@@ -177,7 +177,6 @@ const fetchGalleryData = async () => {
   try {
     const galleries = await gallery.get()
     data.value = galleries.data
-    console.log(data.value)
   } catch (error) {
     console.error('Error fetching gallery:', error)
   }
@@ -188,18 +187,15 @@ onMounted(async () => {
 })
 
 const openModal = () => {
-  console.log('test')
   renderForm.value = true
   editMode.value = false
 }
 
 const editCell = async (row: any, newValue: string, fieldName: string) => {
-  console.log(row.original.id, newValue, fieldName)
   const data = {
     newValue,
     fieldName,
   }
-  console.log(data)
   await gallery.patch(row.original.id, data)
   await fetchGalleryData()
 }
@@ -333,12 +329,9 @@ const columns: ColumnDef<TableData>[] = [
   },
 ]
 
-// Use default layout
 definePageMeta({
   layout: 'default',
 })
-
-console.log('Gallery page loaded, isAdmin:', isAdmin.value)
 </script>
 
 <style scoped></style>
