@@ -43,24 +43,31 @@ export class ImageService {
   }
 
   async createLowResolutionImage(buffer: Buffer): Promise<Buffer> {
-    return await sharp(buffer)
-      .resize(800, 800, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .jpeg({
-        quality: 40,
-        progressive: true,
-      })
-      .toBuffer()
+    try {
+      return await sharp(buffer)
+        .resize(800, 800, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({
+          quality: 40,
+          progressive: true,
+        })
+        .toBuffer()
+    } catch (error) {
+      throw new Error(
+        'There was an error creating a low resolution image:' + error
+      )
+    }
   }
 
   async saveFile(image: Buffer, file: Express.Multer.File) {
     try {
-      console.log(`${this.uploadsDirectory}/${file.originalname}`, image)
       await fs.writeFile(`${this.uploadsDirectory}/${file.originalname}`, image)
     } catch (error) {
-      throw new Error('There was an issue with storing the file' + error)
+      throw new Error(
+        'There was an issue with storing the file in the server:' + error
+      )
     }
   }
 
@@ -68,7 +75,6 @@ export class ImageService {
     try {
       const lastIndex = this.uploadsDirectory.lastIndexOf('/')
       const topLevelDirectory = this.uploadsDirectory.substring(0, lastIndex)
-      console.log(this.uploadsDirectory.lastIndexOf('/'))
       await fs.rmdir(topLevelDirectory, { recursive: true })
     } catch (error) {
       throw new Error('Failed to remove directory' + error)
@@ -82,6 +88,11 @@ export class ImageService {
           fs.rm(`${this.uploadsDirectory}/${file}`)
         })
       )
-    } catch (erro) {}
+    } catch (error) {
+      throw new Error(
+        'There was an error while trying to remove the low resolution image from the server:' +
+          error
+      )
+    }
   }
 }

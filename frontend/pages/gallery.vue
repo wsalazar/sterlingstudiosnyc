@@ -7,6 +7,7 @@
           class="w-5 h-5 text-gray-400"
         />
       </a>
+      <!-- <NuxtLifecycleDemo /> -->
       <DataTable
         :data="transformedData"
         :columns="columns"
@@ -23,7 +24,7 @@
     class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
     <div
-      class="relative top-20 p-5 mx-auto w-96 bg-white rounded-md border shadow-lg"
+      class="relative top-20 p-5 mx-auto w-[50rem] bg-white rounded-md border shadow-lg"
     >
       <div class="mt-3">
         <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
@@ -52,7 +53,7 @@
               id="subdirectory"
               v-model="formData.subdirectory"
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              placeholder="Enter a subdirectory"
+              placeholder="Enter a subdirectory ie: TestDirectory/Subdirectory"
             />
           </div>
 
@@ -70,6 +71,21 @@
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter description"
             ></textarea>
+          </div>
+          <div v-if="editMode === false">
+            <label
+              for="client_email"
+              class="block text-sm font-medium text-gray-700"
+              >Client's Email</label
+            >
+            <input
+              type="text"
+              id="subdirectory"
+              v-model="formData.clientEmail"
+              class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter the client's email address"
+              required
+            />
           </div>
 
           <div>
@@ -121,6 +137,29 @@
                   class="flex justify-between items-center text-sm text-gray-600"
                 >
                   <span class="truncate">{{ file.name }}</span>
+
+                  <div>
+                    <input
+                      type="text"
+                      id="subdirectory"
+                      v-model="formData.rename[index]"
+                      class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      placeholder="Rename this file"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      id="subdirectory"
+                      v-model="formData.price[index]"
+                      class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      placeholder="Price"
+                      required
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+
                   <button
                     type="button"
                     @click="removeFile(index)"
@@ -218,13 +257,13 @@ interface TableData {
   user: { name: string }
   createAt: string
   totalSize: number
-  images: { imageName: string; url: string }[]
+  images: { imageName: string }[]
+  bucketDirectory: string // change this to bucektSubdirectory
 }
 
 const data = ref<TableData[]>([])
 
 const transformedData = computed(() => {
-  console.log(data.value)
   return data.value.map((item) => ({
     ...item,
     userDisplay: item.user?.name || 'No name',
@@ -233,16 +272,6 @@ const transformedData = computed(() => {
     createAt: item.createAt
       ? new Date(item.createAt).toLocaleDateString()
       : 'No date',
-    subdirectory: Array.from(
-      new Set(
-        item.images
-          .map((image) => {
-            const match = image.url.match(/\.com\/(.+)\/[^/]+$/)
-            return match ? match[1] : ''
-          })
-          .filter(Boolean)
-      )
-    ).join(', '),
   }))
 })
 
@@ -251,6 +280,9 @@ interface FormData {
   description: string
   images: File[]
   subdirectory: string
+  rename: string[]
+  price: number[]
+  clientEmail: string
 }
 
 const formData = ref<FormData>({
@@ -258,6 +290,9 @@ const formData = ref<FormData>({
   description: '',
   images: [] as File[],
   subdirectory: '',
+  rename: [] as string[],
+  price: [] as number[],
+  clientEmail: '',
 })
 
 const closeModal = () => {
@@ -266,6 +301,9 @@ const closeModal = () => {
   formData.value.description = ''
   formData.value.images = []
   formData.value.subdirectory = ''
+  formData.value.rename = []
+  formData.value.price = []
+  formData.value.clientEmail = ''
 }
 const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -298,6 +336,9 @@ const handleSubmit = async () => {
       description: '',
       images: [],
       subdirectory: '',
+      rename: [],
+      price: [],
+      clientEmail: '',
     }
     renderForm.value = false
 
@@ -325,7 +366,7 @@ const columns: ColumnDef<TableData>[] = [
     header: 'Images',
   },
   {
-    accessorKey: 'subdirectory',
+    accessorKey: 'bucketDirectory',
     header: 'Subdirectory',
   },
   {

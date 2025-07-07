@@ -47,33 +47,34 @@ export class S3Service extends CloudProviderService {
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
     } catch (error) {
       if (error.error) {
-        console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
+        throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to upload file to S3: ${error.message}`)
     }
   }
 
   async getDirectorySize(bucketDirectory: string): Promise<number> {
-    // console.log(bucketDirectory)
     let continuationToken: string | undefined = undefined
     let totalSize = 0
-    do {
-      const command = new ListObjectsV2Command({
-        Bucket: this.s3Bucket,
-        Prefix: bucketDirectory,
-        ContinuationToken: continuationToken,
-      })
-      const response = await this.s3.send(command)
-      if (response.Contents) {
-        totalSize += response.Contents.reduce((sum, obj) => {
-          // console.log('obj', obj)
-          return sum + (obj.Size || 0)
-        }, 0)
-      }
-      continuationToken = response.NextContinuationToken
-    } while (continuationToken)
-    // console.log('total size', totalSize)
-    return totalSize
+    try {
+      do {
+        const command = new ListObjectsV2Command({
+          Bucket: this.s3Bucket,
+          Prefix: bucketDirectory,
+          ContinuationToken: continuationToken,
+        })
+        const response = await this.s3.send(command)
+        if (response.Contents) {
+          totalSize += response.Contents.reduce((sum, obj) => {
+            return sum + (obj.Size || 0)
+          }, 0)
+        }
+        continuationToken = response.NextContinuationToken
+      } while (continuationToken)
+      return totalSize
+    } catch (error) {
+      throw new Error('There is an unknown error that occurred:' + error)
+    }
   }
 
   async removeImageObjectFromS3(bucketDirectory: string, images: string[]) {
@@ -117,7 +118,7 @@ export class S3Service extends CloudProviderService {
       }
     } catch (error) {
       if (error.error) {
-        console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
+        throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to delete file: ${error.message}`)
     }

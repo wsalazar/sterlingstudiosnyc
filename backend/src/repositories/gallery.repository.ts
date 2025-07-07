@@ -39,29 +39,44 @@ export class GalleryRepository {
       totalSize: number
     }
   ) {
-    return await this.prisma.gallery.update({
-      data: {
-        images: galleryData.images
-          ? {
-              create: galleryData.images,
-            }
-          : undefined,
-        totalSize: galleryData.totalSize,
-      },
-      include: {
-        images: true,
-      },
-      where: { id: galleryId },
-    })
+    try {
+      return await this.prisma.gallery.update({
+        data: {
+          images: galleryData.images
+            ? {
+                create: galleryData.images,
+              }
+            : undefined,
+          totalSize: galleryData.totalSize,
+        },
+        include: {
+          images: true,
+        },
+        where: { id: galleryId },
+      })
+    } catch (error) {
+      throw new Error('There was an error saving your gallery:' + error)
+    }
   }
 
   async getGallery(id: string) {
-    return await this.prisma.gallery.findUnique({
-      where: { id },
-      include: {
-        images: true,
-      },
-    })
+    try {
+      return await this.prisma.gallery.findUnique({
+        where: { id },
+        include: {
+          images: true,
+        },
+      })
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(
+          "Could not find gallery or it doesn't exist: " + error
+        )
+      }
+      throw new Error(
+        'There as an error while trying to access this gallery:' + error
+      )
+    }
   }
 
   async updateGalleryFields(
@@ -79,30 +94,53 @@ export class GalleryRepository {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Record could not be found')
       }
-      throw error
+      throw new Error(
+        'There was an error while trying to update the gallery:' + error
+      )
     }
   }
 
   async deleteGalleryEntry(galleryId: string, images: string[]) {
-    await this.prisma.image.deleteMany({
-      where: { galleryId, imageName: { in: images } },
-    })
+    try {
+      await this.prisma.image.deleteMany({
+        where: { galleryId, imageName: { in: images } },
+      })
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Record not found: ' + error)
+      }
+      throw new Error(
+        'There was an error was trying to delete the gallery: ' + error
+      )
+    }
   }
 
   async deleteGallery(id: string) {
-    await this.prisma.gallery.delete({
-      where: { id: id },
-      include: { images: true },
-    })
+    try {
+      await this.prisma.gallery.delete({
+        where: { id: id },
+        include: { images: true },
+      })
+    } catch (error) {
+      throw new Error(
+        'There was an error was trying to delete the gallery: ' + error
+      )
+    }
   }
 
   async getAllGalleries(): Promise<Gallery[] | []> {
-    return await this.prisma.gallery.findMany({
-      include: {
-        images: true,
-        user: true,
-      },
-    })
+    try {
+      return await this.prisma.gallery.findMany({
+        include: {
+          images: true,
+          user: true,
+        },
+      })
+    } catch (error) {
+      throw new Error(
+        'There was an error while trying to fetch all galleries: ' + error
+      )
+    }
   }
 
   async addImagesToGallery(

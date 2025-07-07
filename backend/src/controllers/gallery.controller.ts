@@ -116,19 +116,29 @@ export class GalleryController {
 
   @Public()
   @Get('/')
-  async getAllGalleries(): Promise<Gallery[] | []> {
-    return this.galleryRepository.getAllGalleries()
+  async getAllGalleries(@Res() res: Response): Promise<Response> {
+    try {
+      const galleries = await this.galleryRepository.getAllGalleries()
+      return res.status(200).json({ message: 'Success', data: galleries })
+    } catch (error) {
+      return res.status(error.status).json({ message: error.message })
+    }
   }
 
   @Public()
   @Get('/:id')
-  async getGallery(@Param('id') id: string) {
-    return await this.galleryRepository.getGallery(id)
+  async getGallery(@Param('id') id: string, @Res() res: Response) {
+    try {
+      const gallery = await this.galleryRepository.getGallery(id)
+      return res.status(200).json({ message: 'Success', data: gallery })
+    } catch (error) {
+      return res.status(error.status).json({ message: error.message })
+    }
   }
 
   @Public()
   @Delete('/:id')
-  async deleteGallery(@Param('id') id: string) {
+  async deleteGallery(@Param('id') id: string, @Res() res: Response) {
     try {
       const gallery = await this.galleryRepository.getGallery(id)
       const bucketDirectory = gallery.bucketDirectory
@@ -136,8 +146,9 @@ export class GalleryController {
       await this.imageService.deleteDirectory()
       await this.cloudProvider.deleteSubdirectory(bucketDirectory)
       await this.galleryRepository.deleteGallery(id)
+      return res.status(200).json({ message: 'Success' })
     } catch (error) {
-      throw error
+      return res.status(error.status).json({ message: error.message })
     }
   }
 
@@ -153,7 +164,6 @@ export class GalleryController {
     @Res() res: Response
   ) {
     try {
-      console.log(gallery)
       await this.galleryRepository.updateGalleryFields(galleryId, gallery)
       return res.status(200).json({ message: 'Success' })
     } catch (error) {
@@ -170,7 +180,8 @@ export class GalleryController {
     gallery: {
       galleryImage: string[]
     },
-    @Param('id') galleryId: string
+    @Param('id') galleryId: string,
+    @Res() res: Response
   ) {
     try {
       const galleryItems = await this.galleryRepository.getGallery(galleryId)
@@ -224,8 +235,9 @@ export class GalleryController {
         images: imageUrls,
         totalSize: totalSize,
       })
+      return res.status(200).json({ message: 'Success' })
     } catch (error) {
-      throw error
+      return res.status(error.status).json({ message: error.message })
     }
   }
 

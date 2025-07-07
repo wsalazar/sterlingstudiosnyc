@@ -88,7 +88,7 @@ export const upload = {
 export const gallery = {
   get: async () => {
     try {
-      return await api.get('v1/gallery')
+      return (await api.get('v1/gallery')).data
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || error)
