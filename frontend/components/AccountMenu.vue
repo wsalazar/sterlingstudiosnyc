@@ -76,6 +76,27 @@ const user = computed(() => {
   return userStore.getUserName || 'Guest'
 })
 
+const INACTIVITY_LIMIT = 5 * 60 * 1000
+let inactivityTimer: ReturnType<typeof setTimeout> | null = null
+const activityEvents = ['mousedown', 'mousemove', 'mousewheel', 'keydown', 'keyup', 'scroll']
+  
+function resetTimer() {
+  if (inactivityTimer) clearTimeout(inactivityTimer)
+   inactivityTimer = setTimeout(() => {
+    logout()
+  }, INACTIVITY_LIMIT)
+}
+
+onMounted(() => {
+  activityEvents.forEach(event => window.addEventListener(event, resetTimer))
+  resetTimer();
+})
+
+onUnmounted(() => {
+  activityEvents.forEach(event => window.removeEventListener(event, resetTimer))
+  if (inactivityTimer) clearTimeout(inactivityTimer)
+})
+
 const logout = async () => {
   let userIsAdmin = false
   if (isAdmin.value === true) {
