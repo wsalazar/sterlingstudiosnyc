@@ -7,6 +7,7 @@
           class="w-5 h-5 text-gray-400"
         />
       </a>
+      <!-- <NuxtLifecycleDemo /> -->
       <DataTable
         :data="transformedData"
         :columns="columns"
@@ -23,7 +24,7 @@
     class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
     <div
-      class="relative top-20 p-5 mx-auto w-96 bg-white rounded-md border shadow-lg"
+      class="relative top-20 p-5 mx-auto w-[50rem] bg-white rounded-md border shadow-lg"
     >
       <div class="mt-3">
         <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
@@ -52,7 +53,7 @@
               id="subdirectory"
               v-model="formData.subdirectory"
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              placeholder="Enter a subdirectory"
+              placeholder="Enter a subdirectory ie: TestDirectory/Subdirectory"
             />
           </div>
 
@@ -71,20 +72,46 @@
               placeholder="Enter description"
             ></textarea>
           </div>
+          <div v-if="editMode === false">
+            <label
+              for="client_email"
+              class="block text-sm font-medium text-gray-700"
+              >Client's Email</label
+            >
+            <input
+              type="email"
+              id="subdirectory"
+              v-model="formData.clientEmail"
+              class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter the client's email address"
+              required
+            />
+          </div>
 
           <div>
             <label for="images" class="block text-sm font-medium text-gray-700"
               >Images</label
             >
-            <input
-              type="file"
-              id="images"
-              multiple
-              :required="editMode === false"
-              accept="image/*"
-              @change="handleImageUpload"
-              class="block mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
+            <div class="inline-block relative">
+              <input
+                type="file"
+                id="images"
+                multiple
+                :required="editMode === false"
+                accept="image/*"
+                @change="handleImageUpload"
+                class="absolute inset-0 z-10 w-full h-full opacity-0 cursor-pointer"
+              />
+              <label
+                for="images"
+                class="block px-4 py-2 font-semibold text-blue-700 bg-blue-50 rounded-md cursor-pointer"
+                >Choose files</label
+              >
+              <span
+                class="absolute top-0 left-0 w-[11rem] px-6 py-2 text-sm text-gray-600 pointer-events-none ml-[120px]"
+                >{{ formData.images.length }} files selected</span
+              >
+            </div>
             <div v-if="editMode === true">
               <p class="mt-2 mb-2 text-sm font-bold text-gray-500">
                 Gallery files:
@@ -121,6 +148,29 @@
                   class="flex justify-between items-center text-sm text-gray-600"
                 >
                   <span class="truncate">{{ file.name }}</span>
+
+                  <div>
+                    <input
+                      type="text"
+                      id="subdirectory"
+                      v-model="formData.rename[index]"
+                      class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      placeholder="Rename this file"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      id="subdirectory"
+                      v-model="formData.price[index]"
+                      class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      placeholder="Price"
+                      required
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+
                   <button
                     type="button"
                     @click="removeFile(index)"
@@ -214,14 +264,13 @@ interface TableData {
   user: { name: string }
   createAt: string
   totalSize: number
-  images: { imageName: string; url: string }[]
-  bucketDirectory: string
+  images: { imageName: string }[]
+  bucketDirectory: string // change this to bucektSubdirectory
 }
 
 const data = ref<TableData[]>([])
 
 const transformedData = computed(() => {
-  console.log(data.value)
   return data.value.map((item) => ({
     ...item,
     userDisplay: item.user?.name || 'No name',
@@ -238,6 +287,9 @@ interface FormData {
   description: string
   images: File[]
   subdirectory: string
+  rename: string[]
+  price: number[]
+  clientEmail: string
 }
 
 const formData = ref<FormData>({
@@ -245,6 +297,9 @@ const formData = ref<FormData>({
   description: '',
   images: [] as File[],
   subdirectory: '',
+  rename: [] as string[],
+  price: [] as number[],
+  clientEmail: '',
 })
 
 const closeModal = () => {
@@ -253,6 +308,9 @@ const closeModal = () => {
   formData.value.description = ''
   formData.value.images = []
   formData.value.subdirectory = ''
+  formData.value.rename = []
+  formData.value.price = []
+  formData.value.clientEmail = ''
 }
 const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -276,19 +334,23 @@ const handleSubmit = async () => {
       const { images } = formData.value
       await upload.patchImage(editUuId.value, imagesToEdit.value, images)
     } else {
+      console.log(formData.value)
       await upload.image(formData.value)
     }
 
     // Reset form
-    formData.value = {
-      name: '',
-      description: '',
-      images: [],
-      subdirectory: '',
-    }
-    renderForm.value = false
+    // formData.value = {
+    //   name: '',
+    //   description: '',
+    //   images: [],
+    //   subdirectory: '',
+    //   rename: [],
+    //   price: [],
+    //   clientEmail: '',
+    // }
+    // renderForm.value = false
 
-    await fetchGalleryData()
+    // await fetchGalleryData()
   } catch (error) {
     console.error('Error submitting form:', error)
   }

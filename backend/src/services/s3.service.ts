@@ -31,49 +31,50 @@ export class S3Service extends CloudProviderService {
 
   async uploadFile(
     file: Express.Multer.File,
+    fileName: string,
     subdirectory: string
   ): Promise<string> {
     try {
-      const key = `${subdirectory}${file.originalname}`
+      const key = `${subdirectory}${fileName}`
       const command = new PutObjectCommand({
         Bucket: this.s3Bucket,
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
       })
-
-      await this.s3.send(command)
+      const resposnse = await this.s3.send(command)
 
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
     } catch (error) {
       if (error.error) {
-        console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
+        throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to upload file to S3: ${error.message}`)
     }
   }
 
   async getDirectorySize(bucketDirectory: string): Promise<number> {
-    // console.log(bucketDirectory)
     let continuationToken: string | undefined = undefined
     let totalSize = 0
-    do {
-      const command = new ListObjectsV2Command({
-        Bucket: this.s3Bucket,
-        Prefix: bucketDirectory,
-        ContinuationToken: continuationToken,
-      })
-      const response = await this.s3.send(command)
-      if (response.Contents) {
-        totalSize += response.Contents.reduce((sum, obj) => {
-          // console.log('obj', obj)
-          return sum + (obj.Size || 0)
-        }, 0)
-      }
-      continuationToken = response.NextContinuationToken
-    } while (continuationToken)
-    // console.log('total size', totalSize)
-    return totalSize
+    try {
+      do {
+        const command = new ListObjectsV2Command({
+          Bucket: this.s3Bucket,
+          Prefix: bucketDirectory,
+          ContinuationToken: continuationToken,
+        })
+        const response = await this.s3.send(command)
+        if (response.Contents) {
+          totalSize += response.Contents.reduce((sum, obj) => {
+            return sum + (obj.Size || 0)
+          }, 0)
+        }
+        continuationToken = response.NextContinuationToken
+      } while (continuationToken)
+      return totalSize
+    } catch (error) {
+      throw new Error('There is an unknown error that occurred:' + error)
+    }
   }
 
   async removeImageObjectFromS3(bucketDirectory: string, images: string[]) {
@@ -81,7 +82,6 @@ export class S3Service extends CloudProviderService {
       const objectsToDelete = images.map((fileName) => ({
         Key: `${bucketDirectory}${fileName}`,
       }))
-      console.log(objectsToDelete)
       const deleteParams = {
         Bucket: this.s3Bucket,
         Delete: {
@@ -117,7 +117,7 @@ export class S3Service extends CloudProviderService {
       }
     } catch (error) {
       if (error.error) {
-        console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
+        throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to delete file: ${error.message}`)
     }

@@ -17,6 +17,7 @@ export abstract class CloudProviderService {
 
   abstract uploadFile(
     file: Express.Multer.File,
+    fileName: string,
     subdirectory: string
   ): Promise<string>
 
