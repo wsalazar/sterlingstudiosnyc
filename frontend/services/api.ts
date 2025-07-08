@@ -38,12 +38,25 @@ export const upload = {
     description: string
     images: File[]
     subdirectory: string
+    clientEmail: string
+    price: number[]
+    rename: string[]
   }) => {
     try {
+      console.log(imageData)
       const formData = new FormData()
       Object.entries(imageData).forEach(([index, value]) => {
         if (index !== 'images' && typeof value === 'string') {
           formData.append(index, value)
+        } else if (index !== 'images' && typeof value === 'object') {
+          const valueArray = Object.values(value)
+          let count: number = 0
+
+          valueArray.forEach((item) => {
+            console.log('item', item)
+            formData.append(`${index}[${count}]`, item)
+            count += 1
+          })
         }
       })
       imageData.images.forEach((file) => {
@@ -88,7 +101,7 @@ export const upload = {
 export const gallery = {
   get: async () => {
     try {
-      return await api.get('v1/gallery')
+      return (await api.get('v1/gallery')).data
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || error)
