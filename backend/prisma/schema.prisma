@@ -30,7 +30,7 @@ model Gallery {
   images            Image[]
   user              User     @relation(fields: [createdBy], references: [id])
   totalSize         Int
-  clientEmail       String @default("")
+  userUuid          String @default("")
   createdBy         String
   createAt          DateTime @default(now())
   updatedAt         DateTime @default(now())

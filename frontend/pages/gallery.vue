@@ -72,21 +72,6 @@
               placeholder="Enter description"
             ></textarea>
           </div>
-          <div v-if="editMode === false">
-            <label
-              for="client_email"
-              class="block text-sm font-medium text-gray-700"
-              >Client's Email</label
-            >
-            <input
-              type="email"
-              id="subdirectory"
-              v-model="formData.clientEmail"
-              class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              placeholder="Enter the client's email address"
-              required
-            />
-          </div>
 
           <div>
             <label for="images" class="block text-sm font-medium text-gray-700"
@@ -118,11 +103,40 @@
               </p>
               <ul class="space-y-1">
                 <li
-                  v-for="(name, index) in imagesToEdit"
+                  v-for="(imageObj, index) in imagesToEdit"
                   :key="index"
-                  class="flex justify-between items-center text-sm text-gray-600"
+                  :data-image-id="imageObj.id"
+                  class="flex gap-2 text-sm text-gray-600"
                 >
-                  <span class="truncate">{{ name }}</span>
+                  <span class="w-[10rem] truncate">{{ subdirectory }}</span>
+                  <span
+                    v-if="!(isImageNameEditable && imageObj.id === imageId)"
+                    class="w-[15rem] truncate"
+                    @click="editImageName(imageObj)"
+                    >{{ `${imageObj.imageName}` }}</span
+                  >
+                  <input
+                    v-else
+                    class="rounded-md border-none outline-none w-[15rem] p-0 focus:ring-0"
+                    type="text"
+                    v-model="newImageName"
+                    @keydown.enter.prevent="onEnterImageName(index)"
+                    @keyup.esc="cancelImage"
+                  />
+                  <span
+                    class="truncate"
+                    v-if="!(isPriceEditable && imageObj.id === imageId)"
+                    @click="editPrice(imageObj)"
+                    >{{ imageObj.price }}</span
+                  >
+                  <input
+                    v-else
+                    class="p-0 rounded-md border-none outline-none focus:ring-0 w-[2.5rem]"
+                    type="number"
+                    v-model="newPrice"
+                    @keydown.enter.prevent="onEnterPrice(index)"
+                    @keyup.esc="cancelImage"
+                  />
                   <button
                     type="button"
                     @click="removeGalleryFiles(index)"
@@ -147,7 +161,9 @@
                   :key="index"
                   class="flex justify-between items-center text-sm text-gray-600"
                 >
-                  <span class="truncate">{{ file.name }}</span>
+                  <span class="truncate">{{
+                    `${subdirectory}${file.name}`
+                  }}</span>
 
                   <div>
                     <input
@@ -212,8 +228,14 @@ const { isAdmin } = useAuth()
 const userIsAdmin = isAdmin.value
 const renderForm = ref(false)
 const editMode = ref(false)
-const imagesToEdit = ref<string[]>([])
+const imagesToEdit = ref<{ imageName: string; price: string; id: string }[]>([])
 const editUuId = ref('')
+const subdirectory = ref('')
+const newImageName = ref('')
+const newPrice = ref<number>(0)
+const imageId = ref('')
+const isImageNameEditable = ref(false)
+const isPriceEditable = ref(false)
 
 import { upload, gallery } from '../services/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -222,6 +244,40 @@ import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { type ColumnDef } from '@tanstack/vue-table'
 
 library.add(faPlus, faTimes)
+
+const editPrice = (imageObj: { id: string; price: string }) => {
+  isPriceEditable.value = true
+  imageId.value = imageObj.id
+  newPrice.value = Number(imageObj.price.replace('$', ''))
+}
+
+const editImageName = (imageObj: { id: string; imageName: string }) => {
+  isImageNameEditable.value = true
+  imageId.value = imageObj.id
+  newImageName.value = imageObj.imageName
+}
+
+const onEnterPrice = (index: number) => {
+  imagesToEdit.value[index].price = String(`$${newPrice.value.toFixed(2)}`)
+  isPriceEditable.value = false
+  imageId.value = ''
+  newPrice.value = 0
+}
+
+const onEnterImageName = (index: number) => {
+  imagesToEdit.value[index].imageName = newImageName.value
+  isImageNameEditable.value = false
+  imageId.value = ''
+  newImageName.value = ''
+}
+
+const cancelImage = () => {
+  isImageNameEditable.value = false
+  isPriceEditable.value = false
+  imageId.value = ''
+  newImageName.value = ''
+  newPrice.value = 0
+}
 
 const fetchGalleryData = async () => {
   try {
@@ -253,7 +309,13 @@ const editCell = async (row: any, newValue: string, fieldName: string) => {
 const editImages = (row: any) => {
   editMode.value = true
   renderForm.value = true
-  imagesToEdit.value = row.original.images.split(',')
+  console.log(row.original.images)
+  imagesToEdit.value = row.original.images.map((image: any) => ({
+    imageName: image.imageName,
+    price: `$${image.price.toFixed(2)}`,
+    id: image.id,
+  }))
+  subdirectory.value = row.original.bucketDirectory
   editUuId.value = row.original.id
 }
 
@@ -264,18 +326,23 @@ interface TableData {
   user: { name: string }
   createAt: string
   totalSize: number
-  images: { imageName: string }[]
+  images: { imageName: string; price: number; id: string }[]
   bucketDirectory: string // change this to bucektSubdirectory
 }
 
 const data = ref<TableData[]>([])
 
 const transformedData = computed(() => {
+  console.log(data.value)
   return data.value.map((item) => ({
     ...item,
     userDisplay: item.user?.name || 'No name',
     totalSize: `${(item.totalSize / (1024 * 1024)).toFixed(2)} MB`,
-    images: item.images.map((image) => image.imageName).join(','),
+    images: item.images.map((image) => ({
+      imageName: image.imageName,
+      price: image.price,
+      id: image.id,
+    })),
     createAt: item.createAt
       ? new Date(item.createAt).toLocaleDateString()
       : 'No date',
@@ -288,8 +355,7 @@ interface FormData {
   images: File[]
   subdirectory: string
   rename: string[]
-  price: number[]
-  clientEmail: string
+  price: string[]
 }
 
 const formData = ref<FormData>({
@@ -298,8 +364,7 @@ const formData = ref<FormData>({
   images: [] as File[],
   subdirectory: '',
   rename: [] as string[],
-  price: [] as number[],
-  clientEmail: '',
+  price: [] as string[],
 })
 
 const closeModal = () => {
@@ -310,7 +375,6 @@ const closeModal = () => {
   formData.value.subdirectory = ''
   formData.value.rename = []
   formData.value.price = []
-  formData.value.clientEmail = ''
 }
 const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -331,14 +395,20 @@ const removeFile = (index: number) => {
 const handleSubmit = async () => {
   try {
     if (editMode.value) {
-      const { images } = formData.value
-      await upload.patchImage(editUuId.value, imagesToEdit.value, images)
+      console.log('form stuff', formData.value)
+      const { images, price, rename } = formData.value
+      const payload = {
+        id: editUuId.value,
+        imagesToEdit: imagesToEdit.value,
+        images: images,
+        price: price,
+        rename: rename,
+      }
+      console.log(imagesToEdit.value)
+      await upload.patchImage(payload)
     } else {
-      console.log(formData.value)
       await upload.image(formData.value)
     }
-
-    // Reset form
     // formData.value = {
     //   name: '',
     //   description: '',
@@ -349,8 +419,7 @@ const handleSubmit = async () => {
     //   clientEmail: '',
     // }
     // renderForm.value = false
-
-    // await fetchGalleryData()
+    await fetchGalleryData()
   } catch (error) {
     console.error('Error submitting form:', error)
   }

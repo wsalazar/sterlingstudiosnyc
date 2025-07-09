@@ -38,8 +38,7 @@ export const upload = {
     description: string
     images: File[]
     subdirectory: string
-    clientEmail: string
-    price: number[]
+    price: string[]
     rename: string[]
   }) => {
     try {
@@ -75,18 +74,51 @@ export const upload = {
       throw error
     }
   },
-  patchImage: async (
-    id: string,
-    galleryImages: string[],
-    selectedImages: File[]
-  ) => {
+  patchImage: async (patchData: {
+    id: string
+    imagesToEdit: { imageName: string; price: string; id: string }[]
+    images: File[]
+    price: string[]
+    rename: string[]
+  }) => {
+    console.log(patchData)
+    const { id, images, price, rename, imagesToEdit } = patchData
     const formData = new FormData()
-    Object.entries(galleryImages).forEach(([index, value]) => {
-      formData.append('galleryImage', value)
-    })
-    Object.entries(selectedImages).forEach(([index, value]) => {
-      formData.append('selectedImage', value)
-    })
+    // Object.entries(patchData.imagesToEdit).forEach(([index, value]) => {
+    //   const { image } = value
+    //   formData.append(`image['${index}]`, image)
+    // })
+    // console.log(selectedImages)
+    /**
+     * @todo have to capture the prices and rename in this bit here.
+     */
+    for (let index = 0; index < images.length; index++) {
+      /**
+       * For new images
+       */
+      formData.append(`image`, images[index])
+      formData.append(`newPrice[]`, price[index])
+      formData.append(`newFileRename[]`, rename[index])
+    }
+
+    for (let index = 0; index < imagesToEdit.length; index++) {
+      /**
+       * For existing images
+       */
+      formData.append('fileName[]', imagesToEdit[index].imageName)
+      formData.append('price[]', imagesToEdit[index].price)
+      formData.append(`galleryImages[]`, imagesToEdit[index].id)
+    }
+
+    // Object.entries(patchData).forEach(([index, value]) => {
+    //   console.log(index, value)
+    //   // const { images, price, rename } = value
+    //   // formData.append(`selectedImages[${index}]`, name)
+    // })
+    // console.log(price, rename)
+    // Object.entries(patchData.price).forEach(([index, value]) => {
+    //   formData.append('selectedImage', value)
+    // })
 
     /**
      * I don't think i'll be able to delete. Because I don't have the actual images. Just the names of the images.

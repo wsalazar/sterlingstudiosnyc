@@ -7,7 +7,8 @@ import {
   DeleteObjectCommand,
   ListObjectsCommand,
   DeleteObjectsCommand,
-  QuoteFields,
+  RenameObjectCommand,
+  CopyObjectCommand,
 } from '@aws-sdk/client-s3'
 import { sanitizeFilename } from '../utils/helper'
 import axios from 'axios'
@@ -50,6 +51,49 @@ export class S3Service extends CloudProviderService {
         throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to upload file to S3: ${error.message}`)
+    }
+  }
+
+  async renameImageObject(imageData: {
+    image: { imageName: string }
+    bucketSubdirectory: string
+    newName: string
+  }) {
+    /**
+     * I was getting an error when trying to use RenameObjectCommand.
+     * Issue is that in my version of the AWS SDK I have a x-amz-rename-source header that is not supported
+     * // const renameParameters = {
+      //   Bucket: this.s3Bucket,
+      //   Key: keyDelete,
+      //   RenameSource: keyDelete,
+      //   NewKey: newKey,
+      // }
+      // const command = await new RenameObjectCommand(renameParameters)
+     */
+    try {
+      const keyCopy = `${this.s3Bucket}/${imageData.bucketSubdirectory}${imageData.image.imageName}`
+      console.log(keyCopy)
+      const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
+      const newKey = `${imageData.bucketSubdirectory}${imageData.newName}`
+
+      const copyParameter = {
+        Bucket: this.s3Bucket,
+        Key: newKey,
+        CopySource: keyCopy,
+      }
+      const copyCommand = await new CopyObjectCommand(copyParameter)
+      await this.s3.send(copyCommand)
+
+      const deleteParameters = {
+        Bucket: this.s3Bucket,
+        Key: keyDelete,
+      }
+      const deleteCommand = await new DeleteObjectCommand(deleteParameters)
+
+      await this.s3.send(deleteCommand)
+    } catch (error) {
+      console.log('This is the error', error)
+      throw new Error(error)
     }
   }
 
