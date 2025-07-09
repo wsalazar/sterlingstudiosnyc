@@ -71,6 +71,20 @@ export class ImageService {
     }
   }
 
+  async renameFileInServer(serverData: {
+    bucketSubdirectory: string
+    image: { imageName: string }
+    newName: string
+  }) {
+    try {
+      const oldPath = `${serverData.bucketSubdirectory}/${serverData.image.imageName}`
+      const newPath = `${serverData.bucketSubdirectory}/${serverData.newName}`
+      await fs.rename(oldPath, newPath)
+    } catch (error) {
+      throw new Error('There was an error rename file: ' + error)
+    }
+  }
+
   async deleteDirectory() {
     try {
       const lastIndex = this.uploadsDirectory.lastIndexOf('/')
