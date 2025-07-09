@@ -12,24 +12,23 @@ export class GalleryRepository {
     createdBy: string
     bucketDirectory: string
     totalSize: number
-    clientEmail: string
   }): Promise<Gallery> {
+    console.log('images', galleryData.images)
     return await this.prisma.gallery.create({
       data: {
         name: galleryData.name,
         description: galleryData.description,
         images: galleryData.images
           ? {
-              create: galleryData.images.map((img, i) => ({
+              create: galleryData.images.map((img) => ({
                 ...img,
-                price: img.price[i],
+                price: Number(img.price),
               })),
             }
           : undefined,
         createdBy: galleryData.createdBy,
         bucketDirectory: galleryData.bucketDirectory,
         totalSize: galleryData.totalSize,
-        clientEmail: galleryData.clientEmail,
       },
       include: {
         images: true,
@@ -146,6 +145,13 @@ export class GalleryRepository {
         'There was an error while trying to fetch all galleries: ' + error
       )
     }
+  }
+
+  async getImageNameById(imgId: string) {
+    return await this.prisma.image.findUnique({
+      where: { id: imgId },
+      select: { imageName: true },
+    })
   }
 
   // async addImagesToGallery(

@@ -288,6 +288,7 @@ const deleteRecord = async (row: any) => {
 const updateInput = (row: any) => {}
 
 const editImages = (row: any) => {
+  console.log('row', row)
   emit('show-overlay', row)
 }
 
