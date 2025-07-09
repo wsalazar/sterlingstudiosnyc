@@ -205,9 +205,10 @@ export class GalleryController {
       /**
        * Might want to throw this stuff into the image service
        */
+      // Remove files that have been makred by users in the client
       // const images = galleryItems.images.map((image) => image.imageName)
       // const imageToRemove = images.filter(
-      //   (img) => !gallery.fileName.includes(img)
+      //   (img) => !fileName.includes(img)
       // )
       // this.imageService.setSubdirectory(galleryItems.bucketDirectory)
       // if (imageToRemove.length > 0) {
@@ -228,19 +229,27 @@ export class GalleryController {
       //   )
       // }
 
-      await Promise.all(
-        gallery.galleryImages.map(async (imgId, index) => {
+      // Rename files in S3 and in server
+      const renamedImages = await Promise.all(
+        galleryImages.map(async (imgId, index) => {
           console.log(imgId, index, fileName[index], price[index])
           const renamedFile = fileName[index]
           const image = await this.galleryRepository.getImageNameById(imgId)
-          await this.cloudProvider.renameImageObject({
+          const s3Url = await this.cloudProvider.renameImageObject({
             image,
             bucketSubdirectory: galleryItems.bucketDirectory,
             newName: renamedFile,
           })
+          const serverData = {
+            bucketSubdirectory: galleryItems.bucketDirectory,
+            image,
+            newName: renamedFile,
+          }
+          await this.imageService.renameFileInServer(serverData)
           /**
            * I have to rename the files in the server and I have to rename the files in the table.
            */
+          return { s3Url, id: imgId }
         })
       )
 

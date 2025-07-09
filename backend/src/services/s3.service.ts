@@ -10,10 +10,7 @@ import {
   RenameObjectCommand,
   CopyObjectCommand,
 } from '@aws-sdk/client-s3'
-import { sanitizeFilename } from '../utils/helper'
-import axios from 'axios'
 import { CloudProviderService } from './cloudprovider.service'
-import { ObjectUnsubscribedError } from 'rxjs'
 
 @Injectable()
 export class S3Service extends CloudProviderService {
@@ -43,8 +40,7 @@ export class S3Service extends CloudProviderService {
         Body: file.buffer,
         ContentType: file.mimetype,
       })
-      const resposnse = await this.s3.send(command)
-
+      await this.s3.send(command)
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
     } catch (error) {
       if (error.error) {
@@ -58,7 +54,7 @@ export class S3Service extends CloudProviderService {
     image: { imageName: string }
     bucketSubdirectory: string
     newName: string
-  }) {
+  }): Promise<string> {
     /**
      * I was getting an error when trying to use RenameObjectCommand.
      * Issue is that in my version of the AWS SDK I have a x-amz-rename-source header that is not supported
@@ -91,6 +87,7 @@ export class S3Service extends CloudProviderService {
       const deleteCommand = await new DeleteObjectCommand(deleteParameters)
 
       await this.s3.send(deleteCommand)
+      return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${newKey}`
     } catch (error) {
       console.log('This is the error', error)
       throw new Error(error)
