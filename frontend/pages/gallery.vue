@@ -110,7 +110,7 @@
                 >
                   <span
                     v-if="!(isImageNameEditable && imageObj.id === imageId)"
-                    class="w-[5rem] truncate"
+                    class="w-[15rem] truncate"
                     @click="editImageName(imageObj)"
                     >{{ `${imageObj.imageName}` }}</span
                   >
@@ -130,7 +130,7 @@
                   >
                   <input
                     v-else
-                    class="p-0 rounded-md border-none outline-none focus:ring-0 w-[2.5rem]"
+                    class="p-0 rounded-md border-none outline-none focus:ring-0 w-[4.5rem]"
                     type="number"
                     v-model="newPrice"
                     @keydown.enter.prevent="onEnterPrice(index)"
@@ -437,6 +437,7 @@ const handleSubmit = async () => {
   try {
     if (editMode.value) {
       console.log('has changes', hasChanges.value)
+      console.log('existing', imagesToEdit.value)
       const { images, price, newFile } = formData.value
       const payload = {
         id: editUuId.value,
