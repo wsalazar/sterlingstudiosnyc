@@ -82,18 +82,10 @@ export const upload = {
     price: string[]
     newFile: string[]
   }) => {
-    console.log(patchData)
     const { id, images, price, newFile, imagesToEdit, removedImages } =
       patchData
     const formData = new FormData()
-    // Object.entries(patchData.imagesToEdit).forEach(([index, value]) => {
-    //   const { image } = value
-    //   formData.append(`image['${index}]`, image)
-    // })
-    // console.log(selectedImages)
-    /**
-     * @todo have to capture the prices and rename in this bit here.
-     */
+
     for (let index = 0; index < images.length; index++) {
       /**
        * For new images
@@ -105,50 +97,14 @@ export const upload = {
 
     if (imagesToEdit) {
       for (let index = 0; index < imagesToEdit.length; index++) {
-        /**
-         * For existing images
-         */
-        formData.append(
-          'existingImages[]',
-          JSON.stringify(imagesToEdit[index])
-        )
-
-        // if (imagesToEdit[index]?.imageName) {
-
-        //   formData.append('fileName[]', imagesToEdit[index].imageName!)
-        //   formData.append(`galleryImages[]`, imagesToEdit[index].id)
-        // }
-        // if (imagesToEdit[index]?.price) {
-        //   formData.append('price[]', imagesToEdit[index].price!)
-        //   formData.append(`galleryImages[]`, imagesToEdit[index].id)
-        // }
+        formData.append('existingImages[]', JSON.stringify(imagesToEdit[index]))
       }
     }
     if (removedImages) {
       for (let index = 0; index < removedImages.length; index++) {
-        /**
-         * For existing images
-         */
         formData.append('removedImages[]', removedImages[index].id)
       }
     }
-    // Object.entries(patchData).forEach(([index, value]) => {
-    //   console.log(index, value)
-    //   // const { images, price, rename } = value
-    //   // formData.append(`selectedImages[${index}]`, name)
-    // })
-    // console.log(price, rename)
-    // Object.entries(patchData.price).forEach(([index, value]) => {
-    //   formData.append('selectedImage', value)
-    // })
-
-    /**
-     * I don't think i'll be able to delete. Because I don't have the actual images. Just the names of the images.
-     * So I'll have to take a diff what I have stored locally and what has been removed. Then cache in a var what
-     *  has been removed and remove it locally and in the s3 bucket.
-     * After add any new images that have been added.
-     */
-
     await api.patch(`v1/gallery/${id}`, formData)
   },
 }

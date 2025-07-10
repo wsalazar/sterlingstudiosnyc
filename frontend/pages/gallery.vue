@@ -442,9 +442,40 @@ const handleSubmit = async () => {
   try {
     isLoading.value = true
     if (editMode.value) {
-      console.log('has changes', hasChanges.value)
-      console.log('existing', imagesToEdit.value)
       const { images, price, newFile } = formData.value
+      const newRenamedFiles = [...newFile]
+
+      const existingImages = imagesToEdit.value.map(
+        (editedImage) => editedImage.imageName
+      )
+
+      const selectedImages = images.map(
+        (image, index) => newRenamedFiles[index] || image.name
+      )
+
+      const uniqueImages = [...new Set(existingImages)]
+      if (uniqueImages.length !== existingImages.length) {
+        toast.error('You have a non-unique image name as a gallery image!')
+        isLoading.value = false
+        return
+      }
+
+      console.log(selectedImages)
+      const uniqueSelectedImages = [...new Set(selectedImages)]
+      if (selectedImages.length !== uniqueSelectedImages.length) {
+        toast.error('You have a non-unique image name as a selected image!')
+        isLoading.value = false
+        return
+      }
+
+      const combinedImageNames = [...existingImages, ...selectedImages]
+      const uniqueCombinedImages = [...new Set(combinedImageNames)]
+      if (combinedImageNames.length !== uniqueCombinedImages.length) {
+        toast.error('You have a non-unique image name!')
+        isLoading.value = false
+        return
+      }
+
       const payload = {
         id: editUuId.value,
         imagesToEdit: hasChanges.value ?? [],
