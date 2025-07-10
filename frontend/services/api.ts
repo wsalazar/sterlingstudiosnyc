@@ -39,7 +39,7 @@ export const upload = {
     images: File[]
     subdirectory: string
     price: string[]
-    rename: string[]
+    newFile: string[]
   }) => {
     try {
       console.log(imageData)
@@ -76,13 +76,15 @@ export const upload = {
   },
   patchImage: async (patchData: {
     id: string
-    imagesToEdit: { imageName: string; price: string; id: string }[]
+    imagesToEdit?: { imageName?: string; price?: string; id: string }[]
+    removedImages: { imageName: string; price: string; id: string }[]
     images: File[]
     price: string[]
-    rename: string[]
+    newFile: string[]
   }) => {
     console.log(patchData)
-    const { id, images, price, rename, imagesToEdit } = patchData
+    const { id, images, price, newFile, imagesToEdit, removedImages } =
+      patchData
     const formData = new FormData()
     // Object.entries(patchData.imagesToEdit).forEach(([index, value]) => {
     //   const { image } = value
@@ -98,18 +100,38 @@ export const upload = {
        */
       formData.append(`image`, images[index])
       formData.append(`newPrice[]`, price[index])
-      formData.append(`newFileRename[]`, rename[index])
+      formData.append(`newFile[]`, newFile[index])
     }
 
-    for (let index = 0; index < imagesToEdit.length; index++) {
-      /**
-       * For existing images
-       */
-      formData.append('fileName[]', imagesToEdit[index].imageName)
-      formData.append('price[]', imagesToEdit[index].price)
-      formData.append(`galleryImages[]`, imagesToEdit[index].id)
-    }
+    if (imagesToEdit) {
+      for (let index = 0; index < imagesToEdit.length; index++) {
+        /**
+         * For existing images
+         */
+        formData.append(
+          'existingImages[]',
+          JSON.stringify(imagesToEdit[index])
+        )
 
+        // if (imagesToEdit[index]?.imageName) {
+
+        //   formData.append('fileName[]', imagesToEdit[index].imageName!)
+        //   formData.append(`galleryImages[]`, imagesToEdit[index].id)
+        // }
+        // if (imagesToEdit[index]?.price) {
+        //   formData.append('price[]', imagesToEdit[index].price!)
+        //   formData.append(`galleryImages[]`, imagesToEdit[index].id)
+        // }
+      }
+    }
+    if (removedImages) {
+      for (let index = 0; index < removedImages.length; index++) {
+        /**
+         * For existing images
+         */
+        formData.append('removedImages[]', removedImages[index].id)
+      }
+    }
     // Object.entries(patchData).forEach(([index, value]) => {
     //   console.log(index, value)
     //   // const { images, price, rename } = value

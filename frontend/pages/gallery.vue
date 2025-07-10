@@ -28,7 +28,7 @@
     >
       <div class="mt-3">
         <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
-          {{ editMode ? 'Edit Gallery Item' : 'Add New Gallery Item' }}
+          {{ galleryOverlayTitle }}
         </h3>
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div v-if="editMode === false">
@@ -108,10 +108,9 @@
                   :data-image-id="imageObj.id"
                   class="flex gap-2 text-sm text-gray-600"
                 >
-                  <span class="w-[10rem] truncate">{{ subdirectory }}</span>
                   <span
                     v-if="!(isImageNameEditable && imageObj.id === imageId)"
-                    class="w-[15rem] truncate"
+                    class="w-[5rem] truncate"
                     @click="editImageName(imageObj)"
                     >{{ `${imageObj.imageName}` }}</span
                   >
@@ -161,15 +160,13 @@
                   :key="index"
                   class="flex justify-between items-center text-sm text-gray-600"
                 >
-                  <span class="truncate">{{
-                    `${subdirectory}${file.name}`
-                  }}</span>
+                  <span class="truncate">{{ `${file.name}` }}</span>
 
                   <div>
                     <input
                       type="text"
-                      id="subdirectory"
-                      v-model="formData.rename[index]"
+                      id="newFile"
+                      v-model="formData.newFile[index]"
                       class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       placeholder="Rename this file"
                     />
@@ -177,7 +174,7 @@
                   <div>
                     <input
                       type="number"
-                      id="subdirectory"
+                      id="price"
                       v-model="formData.price[index]"
                       class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       placeholder="Price"
@@ -229,6 +226,9 @@ const userIsAdmin = isAdmin.value
 const renderForm = ref(false)
 const editMode = ref(false)
 const imagesToEdit = ref<{ imageName: string; price: string; id: string }[]>([])
+const removedImages = ref<{ imageName: string; price: string; id: string }[]>(
+  []
+)
 const editUuId = ref('')
 const subdirectory = ref('')
 const newImageName = ref('')
@@ -236,6 +236,8 @@ const newPrice = ref<number>(0)
 const imageId = ref('')
 const isImageNameEditable = ref(false)
 const isPriceEditable = ref(false)
+const galleryHasBeenEdited = ref(false)
+const hasChanges = ref<{ imageName?: string; price?: string; id: string }[]>([])
 
 import { upload, gallery } from '../services/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -245,8 +247,15 @@ import { type ColumnDef } from '@tanstack/vue-table'
 
 library.add(faPlus, faTimes)
 
+const galleryOverlayTitle = computed(() =>
+  editMode.value
+    ? `Edit Gallery Item - ${subdirectory.value}`
+    : 'Add New Gallery Item'
+)
+
 const editPrice = (imageObj: { id: string; price: string }) => {
   isPriceEditable.value = true
+  galleryHasBeenEdited.value = true
   imageId.value = imageObj.id
   newPrice.value = Number(imageObj.price.replace('$', ''))
 }
@@ -255,17 +264,44 @@ const editImageName = (imageObj: { id: string; imageName: string }) => {
   isImageNameEditable.value = true
   imageId.value = imageObj.id
   newImageName.value = imageObj.imageName
+  galleryHasBeenEdited.value = true
 }
 
 const onEnterPrice = (index: number) => {
-  imagesToEdit.value[index].price = String(`$${newPrice.value.toFixed(2)}`)
+  if (imagesToEdit.value[index].price !== newImageName.value) {
+    imagesToEdit.value[index].price = String(`$${newPrice.value.toFixed(2)}`)
+    const { id, price } = imagesToEdit.value[index]
+    const existingIndex = hasChanges.value.findIndex((item) => item.id === id)
+    if (existingIndex >= 0) {
+      hasChanges.value[existingIndex] = {
+        ...hasChanges.value[existingIndex],
+        price,
+      }
+    } else {
+      hasChanges.value.push({ id, price })
+    }
+    console.log(hasChanges.value)
+  }
   isPriceEditable.value = false
   imageId.value = ''
   newPrice.value = 0
 }
 
 const onEnterImageName = (index: number) => {
-  imagesToEdit.value[index].imageName = newImageName.value
+  if (imagesToEdit.value[index].imageName !== newImageName.value) {
+    imagesToEdit.value[index].imageName = newImageName.value
+    const { id, imageName } = imagesToEdit.value[index]
+    const existingIndex = hasChanges.value.findIndex((item) => item.id === id)
+    if (existingIndex >= 0) {
+      hasChanges.value[existingIndex] = {
+        ...hasChanges.value[existingIndex],
+        imageName,
+      }
+    } else {
+      hasChanges.value.push({ id, imageName })
+    }
+    console.log(hasChanges.value)
+  }
   isImageNameEditable.value = false
   imageId.value = ''
   newImageName.value = ''
@@ -274,6 +310,7 @@ const onEnterImageName = (index: number) => {
 const cancelImage = () => {
   isImageNameEditable.value = false
   isPriceEditable.value = false
+  galleryHasBeenEdited.value = false
   imageId.value = ''
   newImageName.value = ''
   newPrice.value = 0
@@ -354,7 +391,7 @@ interface FormData {
   description: string
   images: File[]
   subdirectory: string
-  rename: string[]
+  newFile: string[]
   price: string[]
 }
 
@@ -363,7 +400,7 @@ const formData = ref<FormData>({
   description: '',
   images: [] as File[],
   subdirectory: '',
-  rename: [] as string[],
+  newFile: [] as string[],
   price: [] as string[],
 })
 
@@ -373,7 +410,7 @@ const closeModal = () => {
   formData.value.description = ''
   formData.value.images = []
   formData.value.subdirectory = ''
-  formData.value.rename = []
+  formData.value.newFile = []
   formData.value.price = []
 }
 const handleImageUpload = (event: Event) => {
@@ -385,7 +422,11 @@ const handleImageUpload = (event: Event) => {
 }
 
 const removeGalleryFiles = (index: number) => {
-  imagesToEdit.value.splice(index, 1)
+  const removed = imagesToEdit.value[index]
+  if (removed) {
+    removedImages.value.push(removed)
+    imagesToEdit.value.splice(index, 1)
+  }
 }
 
 const removeFile = (index: number) => {
@@ -395,16 +436,16 @@ const removeFile = (index: number) => {
 const handleSubmit = async () => {
   try {
     if (editMode.value) {
-      console.log('form stuff', formData.value)
-      const { images, price, rename } = formData.value
+      console.log('has changes', hasChanges.value)
+      const { images, price, newFile } = formData.value
       const payload = {
         id: editUuId.value,
-        imagesToEdit: imagesToEdit.value,
+        imagesToEdit: hasChanges.value ?? [],
         images: images,
         price: price,
-        rename: rename,
+        newFile: newFile,
+        removedImages: removedImages.value,
       }
-      console.log(imagesToEdit.value)
       await upload.patchImage(payload)
     } else {
       await upload.image(formData.value)
@@ -416,8 +457,8 @@ const handleSubmit = async () => {
     //   subdirectory: '',
     //   rename: [],
     //   price: [],
-    //   clientEmail: '',
     // }
+    removedImages.value = []
     // renderForm.value = false
     await fetchGalleryData()
   } catch (error) {
