@@ -18,9 +18,10 @@
     </div>
   </div>
   <div v-if="!userIsAdmin">non-admin</div>
+  <Spinner v-if="isLoading" />
 
   <div
-    v-if="renderForm"
+    v-if="renderForm && !isLoading"
     class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
     <div
@@ -229,6 +230,7 @@ const imagesToEdit = ref<{ imageName: string; price: string; id: string }[]>([])
 const removedImages = ref<{ imageName: string; price: string; id: string }[]>(
   []
 )
+const isLoading = ref(false)
 const editUuId = ref('')
 const subdirectory = ref('')
 const newImageName = ref('')
@@ -244,6 +246,9 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { type ColumnDef } from '@tanstack/vue-table'
+import { useToast } from 'vue-toastification'
+import Spinner from '@/components/Spinner.vue'
+const toast = useToast()
 
 library.add(faPlus, faTimes)
 
@@ -435,6 +440,7 @@ const removeFile = (index: number) => {
 
 const handleSubmit = async () => {
   try {
+    isLoading.value = true
     if (editMode.value) {
       console.log('has changes', hasChanges.value)
       console.log('existing', imagesToEdit.value)
@@ -462,7 +468,14 @@ const handleSubmit = async () => {
     removedImages.value = []
     renderForm.value = false
     hasChanges.value = []
+    isLoading.value = false
+
     await fetchGalleryData()
+    if (editMode.value) {
+      toast.success('Successfully edited a Gallery!')
+    } else {
+      toast.success('Successfully created a Gallery!')
+    }
   } catch (error) {
     /**
      *
