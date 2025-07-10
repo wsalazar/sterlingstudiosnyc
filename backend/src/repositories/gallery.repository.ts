@@ -36,22 +36,28 @@ export class GalleryRepository {
     })
   }
 
+  async createImages(
+    galleryId: string,
+    imagesData: { url: string; imageName: string; price: string }[]
+  ) {}
+
   async updateGallery(
     galleryId: string,
-    galleryData: {
-      images?: { url: string; imageName: string }[]
-      totalSize: number
-    }
+    galleryData: { url: string; imageName: string; price: string }[],
+    totalSize: number
   ) {
     try {
       return await this.prisma.gallery.update({
         data: {
-          images: galleryData.images
+          images: galleryData
             ? {
-                create: galleryData.images,
+                create: galleryData.map((img) => ({
+                  ...img,
+                  price: Number(img.price),
+                })),
               }
             : undefined,
-          totalSize: galleryData.totalSize,
+          totalSize: totalSize,
         },
         include: {
           images: true,
@@ -104,10 +110,15 @@ export class GalleryRepository {
     }
   }
 
-  async deleteGalleryEntry(galleryId: string, images: string[]) {
+  async deleteGalleryEntry(galleryId: string, files?: { imageName: string }[]) {
     try {
+      const imageNames = files?.map((file) => file.imageName) || []
+
       await this.prisma.image.deleteMany({
-        where: { galleryId, imageName: { in: images } },
+        where: {
+          galleryId,
+          imageName: { in: imageNames },
+        },
       })
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -148,10 +159,44 @@ export class GalleryRepository {
   }
 
   async getImageNameById(imgId: string) {
-    return await this.prisma.image.findUnique({
-      where: { id: imgId },
-      select: { imageName: true },
-    })
+    try {
+      return await this.prisma.image.findUnique({
+        where: { id: imgId },
+        select: { imageName: true },
+      })
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(`Could not find image: ${error}`)
+      }
+      throw new Error(`Could not find image: ${error}`)
+    }
+  }
+
+  async updateImages(
+    imgId: string,
+    renamedFile?: string,
+    s3Url?: string,
+    price?: string
+  ) {
+    try {
+      let updateData: { imageName?: string; url?: string; price?: number } = {}
+      if (renamedFile) {
+        updateData.imageName = renamedFile
+      }
+      if (s3Url) {
+        updateData.url = s3Url
+      }
+      if (price) {
+        updateData.price = Number(price?.replace('$', ''))
+      }
+
+      await this.prisma.image.update({
+        where: { id: imgId },
+        data: updateData,
+      })
+    } catch (error) {
+      throw new Error(`Could not find image: ${error}`)
+    }
   }
 
   // async addImagesToGallery(

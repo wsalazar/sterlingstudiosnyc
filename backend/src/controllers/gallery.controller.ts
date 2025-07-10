@@ -20,6 +20,7 @@ import {
   Res,
   createParamDecorator,
   ExecutionContext,
+  Req,
 } from '@nestjs/common'
 import { FilesInterceptor } from '@nestjs/platform-express'
 import { Gallery, User } from '@prisma/client'
@@ -62,7 +63,7 @@ export class GalleryController {
       description: string
       file: GalleryImage[]
       subdirectory: string
-      rename: string[]
+      newFile: string[]
       price: number[]
     }
   ): Promise<Gallery> {
@@ -78,7 +79,7 @@ export class GalleryController {
           }
         }
       }
-      const renameFiles = galleryData.rename
+      const renameFiles = galleryData.newFile
       const prices = galleryData.price
       const imagesData = await Promise.all(
         files.map(async (file, index) => {
@@ -188,99 +189,108 @@ export class GalleryController {
     @UploadedFiles() image: Express.Multer.File[],
     @Body()
     gallery: {
-      newPrice: string[]
-      newFileRename: string[]
-      price: string[]
-      fileName: string[]
-      galleryImages: string[]
+      newPrice?: string[]
+      newFile?: string[]
+      existingImages?: string[]
+      removedImages?: string[]
     },
     @Param('id') galleryId: string,
-    @Res() res: Response
+    @Res() res: Response,
+    @Req() req: Request
   ) {
     try {
-      const { newPrice, newFileRename, price, fileName, galleryImages } =
-        gallery
-
+      const { newPrice, newFile, existingImages, removedImages } = gallery
+      console.log(existingImages)
+      const imageData = existingImages.map((images) => JSON.parse(images))
       const galleryItems = await this.galleryRepository.getGallery(galleryId)
-      /**
-       * Might want to throw this stuff into the image service
-       */
-      // Remove files that have been makred by users in the client
-      // const images = galleryItems.images.map((image) => image.imageName)
-      // const imageToRemove = images.filter(
-      //   (img) => !fileName.includes(img)
+      // /**
+      //  * Might want to throw this stuff into the image service
+      //  * @todo if the admin renames it but then removes. removing will take priority.
+      //  * So will have to capture image id and not go by image name
+      //  */
+      // // Remove files that have been marked by users in the client
+      // const images = galleryItems.images.map((image) => image.id)
+      // const imagesToRemove = images.filter((imgId) =>
+      //   removedImages?.includes(imgId)
       // )
       // this.imageService.setSubdirectory(galleryItems.bucketDirectory)
-      // if (imageToRemove.length > 0) {
-      //   await this.imageService.deleteLowResolutionImagesFromDirectory(
-      //     imageToRemove
-      //   )
-      //   await this.galleryRepository.deleteGalleryEntry(
-      //     galleryId,
-      //     imageToRemove
-      //   )
-      //   /**
-      //    * I should not have to send the bucket directory. The object should know of it's existence
-      //    * Or maybe inject the Image Service inot the Cloud Provider?
-      //    */
-      //   await this.cloudProvider.removeImageObjectFromS3(
-      //     galleryItems.bucketDirectory,
-      //     imageToRemove
-      //   )
-      // }
+      // const imageObj = await Promise.all(
+      //   imagesToRemove?.map(async (imgId) => {
+      //     const image = await this.galleryRepository.getImageNameById(imgId)
+      //     return { imageName: image.imageName }
+      //   })
+      // )
+      // await this.imageService.deleteLowResolutionImagesFromDirectory(imageObj)
+      // await this.galleryRepository.deleteGalleryEntry(galleryId, imageObj)
+      // await this.cloudProvider.removeImageObjectFromS3(
+      //   galleryItems.bucketDirectory,
+      //   imageObj
+      // )
+
+      // /**
+      //  * I should not have to send the bucket directory. The object should know of it's existence
+      //  * Or maybe inject the Image Service inot the Cloud Provider?
+      //  */
 
       // Rename files in S3 and in server
-      const renamedImages = await Promise.all(
-        galleryImages.map(async (imgId, index) => {
-          console.log(imgId, index, fileName[index], price[index])
-          const renamedFile = fileName[index]
-          const image = await this.galleryRepository.getImageNameById(imgId)
-          const s3Url = await this.cloudProvider.renameImageObject({
-            image,
-            bucketSubdirectory: galleryItems.bucketDirectory,
-            newName: renamedFile,
-          })
+      await Promise.all(
+        imageData.map(async (img) => {
+          const image = await this.galleryRepository.getImageNameById(img.id)
+          let newS3Url = null
+          let renamedImage = null
+
+          if (img?.imageName) {
+            const s3Url = await this.cloudProvider.renameImageObject({
+              image,
+              bucketSubdirectory: galleryItems.bucketDirectory,
+              newName: img.imageName,
+            })
+            newS3Url = s3Url
+            renamedImage = img?.imageName
+          }
           const serverData = {
             bucketSubdirectory: galleryItems.bucketDirectory,
             image,
-            newName: renamedFile,
+            newName: renamedImage,
           }
           await this.imageService.renameFileInServer(serverData)
-          /**
-           * I have to rename the files in the server and I have to rename the files in the table.
-           */
-          return { s3Url, id: imgId }
+          await this.galleryRepository.updateImages(
+            img.id,
+            renamedImage,
+            newS3Url,
+            img?.price
+          )
         })
       )
 
-      // /**
-      //  * todo this code is the same as when we create a gallery
-      //  * we need to place this in the gallery repository
-      //  */
-      // const imageUrls = await Promise.all(
-      //   files.map(async (file) => {
-      //     file.originalname = sanitizeFilename(file.originalname)
+      // const imagesData = await Promise.all(
+      //   image.map(async (img, index) => {
+      //     let fileName = newFileRename[index] || img.originalname
+      //     fileName = sanitizeFilename(fileName)
       //     const image = await this.imageService.createLowResolutionImage(
-      //       file.buffer
+      //       img.buffer
       //     )
-      //     this.imageService.saveFile(image, file)
+      //     this.imageService.saveFile(image, fileName)
       //     const url = await this.cloudProvider.uploadFile(
-      //       file,
+      //       img,
+      //       fileName,
       //       galleryItems.bucketDirectory
       //     )
-      //     return { url, imageName: file.originalname }
+      //     return { url, imageName: fileName, price: newPrice[index] }
       //   })
       // )
-      //   const totalSize = await this.cloudProvider.getDirectorySize(
-      //     galleryItems.bucketDirectory
-      //   )
-      //   await this.galleryRepository.updateGallery(galleryItems.id, {
-      //     images: imageUrls,
-      //     totalSize: totalSize,
-      //   })
-      //   return res.status(200).json({ message: 'Success' })
+      // const totalSize = await this.cloudProvider.getDirectorySize(
+      //   galleryItems.bucketDirectory
+      // )
+      // await this.galleryRepository.updateGallery(
+      //   galleryId,
+      //   imagesData,
+      //   totalSize
+      // )
+      return res.status(201).json({ message: 'Success' })
     } catch (error) {
-      return res.status(error.status).json({ message: error.message })
+      const status = error.status || 500
+      return res.status(status).json({ message: error.message })
     }
   }
 }

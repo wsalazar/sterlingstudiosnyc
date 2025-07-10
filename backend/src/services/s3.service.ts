@@ -34,13 +34,18 @@ export class S3Service extends CloudProviderService {
   ): Promise<string> {
     try {
       const key = `${subdirectory}${fileName}`
-      const command = new PutObjectCommand({
+      const putParameters = {
         Bucket: this.s3Bucket,
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
-      })
+      }
+      const command = new PutObjectCommand(putParameters)
+      console.log(key, putParameters)
       await this.s3.send(command)
+      console.log(
+        `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
+      )
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
     } catch (error) {
       if (error.error) {
@@ -53,7 +58,7 @@ export class S3Service extends CloudProviderService {
   async renameImageObject(imageData: {
     image: { imageName: string }
     bucketSubdirectory: string
-    newName: string
+    newName?: string
   }): Promise<string> {
     /**
      * I was getting an error when trying to use RenameObjectCommand.
@@ -68,9 +73,9 @@ export class S3Service extends CloudProviderService {
      */
     try {
       const keyCopy = `${this.s3Bucket}/${imageData.bucketSubdirectory}${imageData.image.imageName}`
-      console.log(keyCopy)
       const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
       const newKey = `${imageData.bucketSubdirectory}${imageData.newName}`
+      console.log(keyCopy, keyDelete, newKey)
 
       const copyParameter = {
         Bucket: this.s3Bucket,
@@ -118,11 +123,15 @@ export class S3Service extends CloudProviderService {
     }
   }
 
-  async removeImageObjectFromS3(bucketDirectory: string, images: string[]) {
+  async removeImageObjectFromS3(
+    bucketDirectory: string,
+    files?: { imageName: string }[]
+  ) {
     try {
-      const objectsToDelete = images.map((fileName) => ({
-        Key: `${bucketDirectory}${fileName}`,
+      const objectsToDelete = files?.map((file) => ({
+        Key: `${bucketDirectory}${file.imageName}`,
       }))
+      if (objectsToDelete.length === 0) return
       const deleteParams = {
         Bucket: this.s3Bucket,
         Delete: {
