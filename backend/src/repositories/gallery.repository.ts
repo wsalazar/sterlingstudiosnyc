@@ -189,7 +189,7 @@ export class GalleryRepository {
       if (price) {
         updateData.price = Number(price?.replace('$', ''))
       }
-
+      console.log('update', updateData)
       await this.prisma.image.update({
         where: { id: imgId },
         data: updateData,

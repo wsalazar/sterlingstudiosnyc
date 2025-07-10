@@ -80,8 +80,9 @@ export class ImageService {
       if (!serverData?.newName) {
         return
       }
-      const oldPath = `${this.uploadsDirectory}/${serverData.bucketSubdirectory}${serverData.image.imageName}`
-      const newPath = `${this.uploadsDirectory}/${serverData.bucketSubdirectory}${serverData?.newName}`
+      const oldPath = `${this.uploadsDirectory}/${serverData.image.imageName}`
+      const newPath = `${this.uploadsDirectory}/${serverData?.newName}`
+      console.log('rename', oldPath, newPath)
       await fs.rename(oldPath, newPath)
     } catch (error) {
       throw new Error('There was an error rename file: ' + error)

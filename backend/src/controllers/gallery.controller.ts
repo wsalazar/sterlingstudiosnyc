@@ -213,7 +213,7 @@ export class GalleryController {
       // const imagesToRemove = images.filter((imgId) =>
       //   removedImages?.includes(imgId)
       // )
-      // this.imageService.setSubdirectory(galleryItems.bucketDirectory)
+      this.imageService.setSubdirectory(galleryItems.bucketDirectory)
       // const imageObj = await Promise.all(
       //   imagesToRemove?.map(async (imgId) => {
       //     const image = await this.galleryRepository.getImageNameById(imgId)
