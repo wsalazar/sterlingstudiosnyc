@@ -73,15 +73,15 @@ export class S3Service extends CloudProviderService {
      */
     try {
       const keyCopy = `${this.s3Bucket}/${imageData.bucketSubdirectory}${imageData.image.imageName}`
-      const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
       const newKey = `${imageData.bucketSubdirectory}${imageData.newName}`
-      console.log(keyCopy, keyDelete, newKey)
+      const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
 
       const copyParameter = {
         Bucket: this.s3Bucket,
         Key: newKey,
         CopySource: keyCopy,
       }
+      console.log('copy', copyParameter)
       const copyCommand = await new CopyObjectCommand(copyParameter)
       await this.s3.send(copyCommand)
 
@@ -89,6 +89,7 @@ export class S3Service extends CloudProviderService {
         Bucket: this.s3Bucket,
         Key: keyDelete,
       }
+      console.log('delete', deleteParameters)
       const deleteCommand = await new DeleteObjectCommand(deleteParameters)
 
       await this.s3.send(deleteCommand)

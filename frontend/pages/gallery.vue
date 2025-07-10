@@ -450,16 +450,17 @@ const handleSubmit = async () => {
     } else {
       await upload.image(formData.value)
     }
-    // formData.value = {
-    //   name: '',
-    //   description: '',
-    //   images: [],
-    //   subdirectory: '',
-    //   rename: [],
-    //   price: [],
-    // }
+    formData.value = {
+      name: '',
+      description: '',
+      images: [],
+      subdirectory: '',
+      newFile: [],
+      price: [],
+    }
     removedImages.value = []
-    // renderForm.value = false
+    renderForm.value = false
+    hasChanges.value = []
     await fetchGalleryData()
   } catch (error) {
     console.error('Error submitting form:', error)
