@@ -463,6 +463,14 @@ const handleSubmit = async () => {
     hasChanges.value = []
     await fetchGalleryData()
   } catch (error) {
+    /**
+     *
+     * @todo if it failes i need to renderForm false
+     * @todo removedImages to []
+     * @todo hasChanges to []
+     * @todo some kind of thing that tells the admin something went wrong with
+     * logs
+     * */
     console.error('Error submitting form:', error)
   }
 }

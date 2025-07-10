@@ -200,32 +200,32 @@ export class GalleryController {
   ) {
     try {
       const { newPrice, newFile, existingImages, removedImages } = gallery
-      console.log(existingImages)
-      const imageData = existingImages.map((images) => JSON.parse(images))
+      const imageData =
+        existingImages?.map((images) => JSON.parse(images)) || []
       const galleryItems = await this.galleryRepository.getGallery(galleryId)
       // /**
       //  * Might want to throw this stuff into the image service
       //  * @todo if the admin renames it but then removes. removing will take priority.
       //  * So will have to capture image id and not go by image name
       //  */
-      // // Remove files that have been marked by users in the client
-      // const images = galleryItems.images.map((image) => image.id)
-      // const imagesToRemove = images.filter((imgId) =>
-      //   removedImages?.includes(imgId)
-      // )
+      // Remove files that have been marked by users in the client
+      const images = galleryItems.images.map((image) => image.id)
+      const imagesToRemove = images.filter((imgId) =>
+        removedImages?.includes(imgId)
+      )
       this.imageService.setSubdirectory(galleryItems.bucketDirectory)
-      // const imageObj = await Promise.all(
-      //   imagesToRemove?.map(async (imgId) => {
-      //     const image = await this.galleryRepository.getImageNameById(imgId)
-      //     return { imageName: image.imageName }
-      //   })
-      // )
-      // await this.imageService.deleteLowResolutionImagesFromDirectory(imageObj)
-      // await this.galleryRepository.deleteGalleryEntry(galleryId, imageObj)
-      // await this.cloudProvider.removeImageObjectFromS3(
-      //   galleryItems.bucketDirectory,
-      //   imageObj
-      // )
+      const imageObj = await Promise.all(
+        imagesToRemove?.map(async (imgId) => {
+          const image = await this.galleryRepository.getImageNameById(imgId)
+          return { imageName: image.imageName }
+        })
+      )
+      await this.imageService.deleteLowResolutionImagesFromDirectory(imageObj)
+      await this.galleryRepository.deleteGalleryEntry(galleryId, imageObj)
+      await this.cloudProvider.removeImageObjectFromS3(
+        galleryItems.bucketDirectory,
+        imageObj
+      )
 
       // /**
       //  * I should not have to send the bucket directory. The object should know of it's existence
@@ -234,7 +234,7 @@ export class GalleryController {
 
       // Rename files in S3 and in server
       await Promise.all(
-        imageData.map(async (img) => {
+        imageData?.map(async (img) => {
           const image = await this.galleryRepository.getImageNameById(img.id)
           let newS3Url = null
           let renamedImage = null
@@ -263,30 +263,30 @@ export class GalleryController {
         })
       )
 
-      // const imagesData = await Promise.all(
-      //   image.map(async (img, index) => {
-      //     let fileName = newFileRename[index] || img.originalname
-      //     fileName = sanitizeFilename(fileName)
-      //     const image = await this.imageService.createLowResolutionImage(
-      //       img.buffer
-      //     )
-      //     this.imageService.saveFile(image, fileName)
-      //     const url = await this.cloudProvider.uploadFile(
-      //       img,
-      //       fileName,
-      //       galleryItems.bucketDirectory
-      //     )
-      //     return { url, imageName: fileName, price: newPrice[index] }
-      //   })
-      // )
-      // const totalSize = await this.cloudProvider.getDirectorySize(
-      //   galleryItems.bucketDirectory
-      // )
-      // await this.galleryRepository.updateGallery(
-      //   galleryId,
-      //   imagesData,
-      //   totalSize
-      // )
+      const imagesData = await Promise.all(
+        image?.map(async (img, index) => {
+          let fileName = newFile[index] || img.originalname
+          fileName = sanitizeFilename(fileName)
+          const image = await this.imageService.createLowResolutionImage(
+            img.buffer
+          )
+          this.imageService.saveFile(image, fileName)
+          const url = await this.cloudProvider.uploadFile(
+            img,
+            fileName,
+            galleryItems.bucketDirectory
+          )
+          return { url, imageName: fileName, price: newPrice[index] }
+        })
+      )
+      const totalSize = await this.cloudProvider.getDirectorySize(
+        galleryItems.bucketDirectory
+      )
+      await this.galleryRepository.updateGallery(
+        galleryId,
+        imagesData,
+        totalSize
+      )
       return res.status(201).json({ message: 'Success' })
     } catch (error) {
       const status = error.status || 500
