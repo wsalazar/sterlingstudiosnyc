@@ -29,9 +29,15 @@ export abstract class CloudProviderService {
     files?: { imageName: string }[]
   )
 
-  abstract renameImageObject(imageData: {
+  abstract copyImageObject(imageData: {
     image: { imageName: string }
     bucketSubdirectory: string
-    newName: string
+    newName?: string
+    tempFile?: boolean
+  })
+
+  abstract deleteImageObject(imageData: {
+    image: { imageName: string }
+    bucketSubdirectory: string
   })
 }

@@ -55,10 +55,11 @@ export class S3Service extends CloudProviderService {
     }
   }
 
-  async renameImageObject(imageData: {
+  async copyImageObject(imageData: {
     image: { imageName: string }
     bucketSubdirectory: string
     newName?: string
+    tempFile?: boolean
   }): Promise<string> {
     /**
      * I was getting an error when trying to use RenameObjectCommand.
@@ -73,8 +74,9 @@ export class S3Service extends CloudProviderService {
      */
     try {
       const keyCopy = `${this.s3Bucket}/${imageData.bucketSubdirectory}${imageData.image.imageName}`
-      const newKey = `${imageData.bucketSubdirectory}${imageData.newName}`
-      const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
+      const temporaryExtension = imageData.tempFile ? '.tmp' : ''
+      const newKey = `${imageData.bucketSubdirectory}${imageData.newName}${temporaryExtension}`
+      // const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
 
       const copyParameter = {
         Bucket: this.s3Bucket,
@@ -82,18 +84,38 @@ export class S3Service extends CloudProviderService {
         CopySource: keyCopy,
       }
       console.log('copy', copyParameter)
-      const copyCommand = await new CopyObjectCommand(copyParameter)
+      const copyCommand = new CopyObjectCommand(copyParameter)
       await this.s3.send(copyCommand)
 
+      // const deleteParameters = {
+      //   Bucket: this.s3Bucket,
+      //   Key: keyDelete,
+      // }
+      // console.log('delete', deleteParameters)
+      // const deleteCommand = new DeleteObjectCommand(deleteParameters)
+
+      // await this.s3.send(deleteCommand)
+      return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${newKey}`
+    } catch (error) {
+      console.log('This is the error', error)
+      throw new Error(error)
+    }
+  }
+
+  async deleteImageObject(imageData: {
+    image: { imageName: string }
+    bucketSubdirectory: string
+  }) {
+    try {
+      const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
       const deleteParameters = {
         Bucket: this.s3Bucket,
         Key: keyDelete,
       }
       console.log('delete', deleteParameters)
-      const deleteCommand = await new DeleteObjectCommand(deleteParameters)
+      const deleteCommand = new DeleteObjectCommand(deleteParameters)
 
       await this.s3.send(deleteCommand)
-      return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${newKey}`
     } catch (error) {
       console.log('This is the error', error)
       throw new Error(error)

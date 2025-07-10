@@ -240,10 +240,24 @@ export class GalleryController {
           let renamedImage = null
 
           if (img?.imageName) {
-            const s3Url = await this.cloudProvider.renameImageObject({
+            await this.cloudProvider.copyImageObject({
               image,
               bucketSubdirectory: galleryItems.bucketDirectory,
               newName: img.imageName,
+              tempFile: true,
+            })
+            await this.cloudProvider.deleteImageObject({
+              image,
+              bucketSubdirectory: galleryItems.bucketDirectory,
+            })
+            const s3Url = await this.cloudProvider.copyImageObject({
+              image: { imageName: `${img.imageName}.tmp` },
+              bucketSubdirectory: galleryItems.bucketDirectory,
+              newName: img.imageName,
+            })
+            await this.cloudProvider.deleteImageObject({
+              image: { imageName: `${img.imageName}.tmp` },
+              bucketSubdirectory: galleryItems.bucketDirectory,
             })
             newS3Url = s3Url
             renamedImage = img?.imageName
