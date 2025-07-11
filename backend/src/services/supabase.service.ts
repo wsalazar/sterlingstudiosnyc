@@ -21,7 +21,6 @@ export class SupabaseService {
     return this.supabase
   }
 
-  // Add your Supabase methods here
   async signUp(email: string, password: string) {
     return this.supabase.auth.signUp({
       email,
