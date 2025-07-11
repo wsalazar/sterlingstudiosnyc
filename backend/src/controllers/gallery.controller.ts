@@ -65,9 +65,14 @@ export class GalleryController {
       subdirectory: string
       newFile: string[]
       price: number[]
-    }
-  ): Promise<Gallery> {
+    },
+    @Res() res: Response
+  ): Promise<Response> {
     try {
+      console.log(files)
+      let size = 0
+      files.forEach((file) => (file.size += size))
+      console.log(size)
       let subdirectory = galleryData?.subdirectory ?? ''
       if (subdirectory) {
         if (!subdirectory.endsWith('/')) {
@@ -75,7 +80,8 @@ export class GalleryController {
           try {
             await this.imageService.setSubdirectory(subdirectory)
           } catch (error) {
-            console.log('is ther ean error here?', error)
+            const status = error.status || 500
+            return res.status(status).json({ message: error.message })
           }
         }
       }
@@ -98,7 +104,7 @@ export class GalleryController {
         })
       )
       const totalSize = await this.cloudProvider.getDirectorySize(subdirectory)
-      return await this.galleryRepository.createGallery({
+      const gallery = await this.galleryRepository.createGallery({
         name: galleryData.name,
         description: galleryData.description,
         images: imagesData,
@@ -106,8 +112,12 @@ export class GalleryController {
         bucketDirectory: subdirectory,
         totalSize: totalSize,
       })
+      return res
+        .status(201)
+        .json({ message: 'Successfully created a gallery.', data: gallery })
     } catch (error) {
-      throw error
+      const status = error.status || 500
+      return res.status(status).json({ message: error.message })
     }
   }
 
@@ -124,7 +134,10 @@ export class GalleryController {
 
   @Public()
   @Get('/:id')
-  async getGallery(@Param('id') id: string, @Res() res: Response) {
+  async getGallery(
+    @Param('id') id: string,
+    @Res() res: Response
+  ): Promise<Response> {
     try {
       const gallery = await this.galleryRepository.getGallery(id)
       console.log(gallery)
@@ -136,7 +149,10 @@ export class GalleryController {
 
   @Public()
   @Delete('/:id')
-  async deleteGallery(@Param('id') id: string, @Res() res: Response) {
+  async deleteGallery(
+    @Param('id') id: string,
+    @Res() res: Response
+  ): Promise<Response> {
     try {
       const gallery = await this.galleryRepository.getGallery(id)
       const bucketDirectory = gallery.bucketDirectory
@@ -144,7 +160,7 @@ export class GalleryController {
       await this.imageService.deleteDirectory()
       await this.cloudProvider.deleteSubdirectory(bucketDirectory)
       await this.galleryRepository.deleteGallery(id)
-      return res.status(200).json({ message: 'Success' })
+      return res.status(200).json({ message: 'Gallery deleted successfully' })
     } catch (error) {
       return res.status(error.status).json({ message: error.message })
     }
@@ -167,10 +183,10 @@ export class GalleryController {
     },
     @Param('id') galleryId: string,
     @Res() res: Response
-  ) {
+  ): Promise<Response> {
     try {
       await this.galleryRepository.updateGalleryFields(galleryId, gallery)
-      return res.status(200).json({ message: 'Success' })
+      return res.status(200).json({ message: 'Gallery updated successfully' })
     } catch (error) {
       return res.status(error.status).json({ message: error.message })
     }
@@ -195,10 +211,13 @@ export class GalleryController {
       removedImages?: string[]
     },
     @Param('id') galleryId: string,
-    @Res() res: Response,
-    @Req() req: Request
-  ) {
+    @Res() res: Response
+  ): Promise<Response> {
     try {
+      console.log(image)
+      let size = 0
+      image.forEach((file) => (file.size += size))
+      console.log(size)
       const { newPrice, newFile, existingImages, removedImages } = gallery
       const imageData =
         existingImages?.map((images) => JSON.parse(images)) || []
@@ -269,6 +288,7 @@ export class GalleryController {
           }
           await this.imageService.renameFileInServer(serverData)
           await this.galleryRepository.updateImages(
+            galleryId,
             img.id,
             renamedImage,
             newS3Url,
@@ -301,7 +321,7 @@ export class GalleryController {
         imagesData,
         totalSize
       )
-      return res.status(201).json({ message: 'Success' })
+      return res.status(200).json({ message: 'Gallery updated successfully' })
     } catch (error) {
       const status = error.status || 500
       return res.status(status).json({ message: error.message })

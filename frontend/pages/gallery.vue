@@ -285,7 +285,6 @@ const onEnterPrice = (index: number) => {
     } else {
       hasChanges.value.push({ id, price })
     }
-    console.log(hasChanges.value)
   }
   isPriceEditable.value = false
   imageId.value = ''
@@ -305,7 +304,6 @@ const onEnterImageName = (index: number) => {
     } else {
       hasChanges.value.push({ id, imageName })
     }
-    console.log(hasChanges.value)
   }
   isImageNameEditable.value = false
   imageId.value = ''
@@ -351,7 +349,6 @@ const editCell = async (row: any, newValue: string, fieldName: string) => {
 const editImages = (row: any) => {
   editMode.value = true
   renderForm.value = true
-  console.log(row.original.images)
   imagesToEdit.value = row.original.images.map((image: any) => ({
     imageName: image.imageName,
     price: `$${image.price.toFixed(2)}`,
@@ -366,7 +363,7 @@ interface TableData {
   name: string
   description: string
   user: { name: string }
-  createAt: string
+  updatedAt: string
   totalSize: number
   images: { imageName: string; price: number; id: string }[]
   bucketDirectory: string // change this to bucektSubdirectory
@@ -375,7 +372,6 @@ interface TableData {
 const data = ref<TableData[]>([])
 
 const transformedData = computed(() => {
-  console.log(data.value)
   return data.value.map((item) => ({
     ...item,
     userDisplay: item.user?.name || 'No name',
@@ -385,8 +381,14 @@ const transformedData = computed(() => {
       price: image.price,
       id: image.id,
     })),
-    createAt: item.createAt
-      ? new Date(item.createAt).toLocaleDateString()
+    updatedAt: item.updatedAt
+      ? new Date(item.updatedAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       : 'No date',
   }))
 })
@@ -460,7 +462,6 @@ const handleSubmit = async () => {
         return
       }
 
-      console.log(selectedImages)
       const uniqueSelectedImages = [...new Set(selectedImages)]
       if (selectedImages.length !== uniqueSelectedImages.length) {
         toast.error('You have a non-unique image name as a selected image!')
@@ -546,7 +547,7 @@ const columns: ColumnDef<TableData>[] = [
     header: 'Gallery Space',
   },
   {
-    accessorKey: 'createAt',
+    accessorKey: 'updatedAt',
     header: 'Date Modified',
   },
   {

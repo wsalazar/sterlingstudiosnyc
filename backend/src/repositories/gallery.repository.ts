@@ -98,6 +98,7 @@ export class GalleryRepository {
         where: { id: galleryId },
         data: {
           [gallery.fieldName]: gallery.newValue,
+          updatedAt: new Date().toISOString(),
         },
       })
     } catch (error) {
@@ -173,6 +174,7 @@ export class GalleryRepository {
   }
 
   async updateImages(
+    galleryId: string,
     imgId: string,
     renamedFile?: string,
     s3Url?: string,
@@ -189,10 +191,20 @@ export class GalleryRepository {
       if (price) {
         updateData.price = Number(price?.replace('$', ''))
       }
-      console.log('update', updateData)
-      await this.prisma.image.update({
-        where: { id: imgId },
-        data: updateData,
+      await this.prisma.gallery.update({
+        where: { id: galleryId },
+        data: {
+          images: {
+            update: {
+              where: { id: imgId },
+              data: updateData,
+            },
+          },
+          updatedAt: new Date().toISOString(),
+        },
+        include: {
+          images: true,
+        },
       })
     } catch (error) {
       throw new Error(`Could not find image: ${error}`)
