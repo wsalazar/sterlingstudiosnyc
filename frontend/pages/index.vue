@@ -6,8 +6,5 @@
 
 <script setup lang="ts">
 // Debug logging
-onMounted(() => {
-  console.log('Index page mounted')
-  console.log('Current route:', useRoute())
-})
+onMounted(() => {})
 </script>

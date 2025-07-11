@@ -38,7 +38,7 @@ export class ImageService {
     try {
       await this.ensureUploadsDirectoryExists()
     } catch (error) {
-      throw error
+      throw Error('Something went wrong' + error)
     }
   }
 

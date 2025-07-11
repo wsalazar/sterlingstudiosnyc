@@ -42,7 +42,6 @@ export const upload = {
     newFile: string[]
   }) => {
     try {
-      console.log(imageData)
       const formData = new FormData()
       Object.entries(imageData).forEach(([index, value]) => {
         if (index !== 'images' && typeof value === 'string') {
@@ -52,7 +51,6 @@ export const upload = {
           let count: number = 0
 
           valueArray.forEach((item) => {
-            console.log('item', item)
             formData.append(`${index}[${count}]`, item)
             count += 1
           })
@@ -142,7 +140,6 @@ export const authApi = {
           'Content-Type': 'application/json',
         },
       })
-      console.log('login', response.data)
       return response.data
     } catch (error) {
       if (axios.isAxiosError(error)) {
