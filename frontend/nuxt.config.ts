@@ -34,6 +34,27 @@ export default defineNuxtConfig({
         clientPort: 3000,
         protocol: 'ws',
       },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
+          configure: (proxy, options) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              // Forward cookies
+              if (req.headers.cookie) {
+                proxyReq.setHeader('Cookie', req.headers.cookie)
+              }
+            })
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              // Forward cookies from backend to frontend
+              if (proxyRes.headers['set-cookie']) {
+                res.setHeader('Set-Cookie', proxyRes.headers['set-cookie'])
+              }
+            })
+          },
+        },
+      },
     },
   },
 })

@@ -1,6 +1,18 @@
 <template>
   <div class="flex flex-col justify-center items-center min-h-screen">
-    <div class="px-4 py-8 w-full max-w-md">
+    <!-- Loading state while checking authentication -->
+    <div
+      v-if="loading"
+      class="flex flex-col justify-center items-center min-h-screen"
+    >
+      <div
+        class="w-12 h-12 rounded-full border-b-2 border-indigo-600 animate-spin"
+      ></div>
+      <p class="mt-4 text-gray-600">Checking authentication...</p>
+    </div>
+
+    <!-- Login form (only show when not loading and not authenticated) -->
+    <div v-else-if="!userData" class="px-4 py-8 w-full max-w-md">
       <div class="flex flex-col justify-center items-center py-12">
         <h1 class="text-4xl font-bold text-gray-900">
           <img
@@ -85,11 +97,15 @@ definePageMeta({
   layout: 'admin-auth',
 })
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useLogin } from '~/composables/useLogin'
 import { useUserStore } from '@/stores/user'
+import { useAuth } from '~/composables/useAuth'
 
 const { login } = useLogin()
+const { userData, loading } = useAuth()
+// const { isAuthenticated, isLoading: authLoading, isInitialized } = useAuth()
+
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
@@ -103,7 +119,7 @@ const handleSubmit = async () => {
     if (response.success) {
       const userStore = useUserStore()
       userStore.setUserName(response.user)
-      await navigateTo('/')
+      await navigateTo('/gallery')
     }
   } catch (error) {
     console.error('Login failed:', error)

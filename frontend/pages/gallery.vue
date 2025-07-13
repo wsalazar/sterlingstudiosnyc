@@ -222,8 +222,28 @@
 </template>
 
 <script setup lang="ts">
-const { isAdmin } = useAuth()
-const userIsAdmin = isAdmin.value
+onMounted(async () => {
+  console.log('=== Gallery Page Mounted ===')
+  console.log('Current route:', useRoute().path)
+  // console.log('Auth state:', {
+  //   isAuthenticated: isAuthenticated.value,
+  //   isAdmin: isAdmin.value,
+  //   authLoading: authLoading.value,
+  // })
+  console.log('userIsAdmin value:', userIsAdmin.value)
+  await fetchGalleryData()
+})
+
+const { userData, loading } = useAuth()
+
+// const { isAdmin, isAuthenticated, isLoading: authLoading } = useAuth()
+const userIsAdmin = computed(() => {
+  console.log('=== Gallery Page - userIsAdmin computed ===')
+  console.log('isAdmin.value:', userData.value?.admin)
+  console.log('isAuthenticated.value:', userData.value)
+  console.log('authLoading.value:', loading.value)
+  return userData.value?.admin
+})
 const renderForm = ref(false)
 const editMode = ref(false)
 const imagesToEdit = ref<{ imageName: string; price: string; id: string }[]>([])
@@ -328,9 +348,13 @@ const fetchGalleryData = async () => {
   }
 }
 
-onMounted(async () => {
-  await fetchGalleryData()
-})
+// Add debugging for when the page is created
+// console.log('=== Gallery Page Created ===')
+// console.log('Initial auth state:', {
+//   isAuthenticated: isAuthenticated.value,
+//   isAdmin: isAdmin.value,
+//   authLoading: authLoading.value,
+// })
 
 const openModal = () => {
   renderForm.value = true

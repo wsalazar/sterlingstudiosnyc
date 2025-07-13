@@ -44,9 +44,8 @@ export const useLogin = () => {
       console.error('Backend logout failed:', error)
     }
 
-    isAuthenticated.value = false
-    isAdmin.value = false
-    userStore.clearUserName()
+    const { resetAuth } = useAuth()
+    resetAuth()
 
     if (process.client) {
       localStorage.removeItem('sterling_session')

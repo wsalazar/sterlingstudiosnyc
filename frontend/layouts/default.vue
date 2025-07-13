@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="isLoading"
+    v-if="loading"
     class="flex fixed inset-0 z-50 justify-center items-center bg-white"
   >
     <div class="text-center">
@@ -71,9 +71,10 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const { isAdmin: userIsAdmin, isLoading } = useAuth()
+const { userData, loading } = useAuth()
+// const { isAdmin: userIsAdmin, isLoading, isInitializing } = useAuth()
 
-const isAdmin = computed(() => userIsAdmin.value === true)
+const isAdmin = computed(() => userData.value?.admin === true)
 </script>
 
 <style>

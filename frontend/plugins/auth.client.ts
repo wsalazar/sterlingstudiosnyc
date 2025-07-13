@@ -1,13 +1,6 @@
 export default defineNuxtPlugin(async () => {
-  const { validateUser, isAuthenticated } = useAuth()
+  const { initializeAuth } = useAuth()
 
-  await validateUser()
-
-  const route = useRoute()
-
-  if (route.path === '/auth' || route.path === '/admin/auth') {
-    if (isAuthenticated.value === true) {
-      await navigateTo('/')
-    }
-  }
+  // Initialize auth state on app startup
+  await initializeAuth()
 })
