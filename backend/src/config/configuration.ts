@@ -17,6 +17,16 @@ export default () => ({
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   },
+  token: {
+    secret: process.env.JWT_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
+  },
+  s3: {
+    awsRegion: process.env.AWS_REGION,
+    awsId: process.env.AWS_ACCESS_KEY_ID,
+    awsAccess: process.env.AWS_SECRET_ACCESS_KEY,
+    bucket: process.env.AWS_S3_BUCKET,
+  },
   dropbox: {
     appKey: process.env.DROPBOX_APP_KEY,
     appSecret: process.env.DROPBOX_APP_SECRET,

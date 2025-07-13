@@ -25,7 +25,11 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express'
 import { Gallery, User } from '@prisma/client'
 import { CloudProviderService } from '@/services/cloudprovider.service'
-import { Response } from 'express'
+import { Response, Request } from 'express'
+
+interface AuthenticatedRequest extends Request {
+  user?: { id: string; email: string }
+}
 
 interface GalleryImage {
   lastModified: number
@@ -121,10 +125,13 @@ export class GalleryController {
     }
   }
 
-  @Public()
   @Get('/')
-  async getAllGalleries(@Res() res: Response): Promise<Response> {
+  async getAllGalleries(
+    @GetUser() user: User,
+    @Res() res: Response
+  ): Promise<Response> {
     try {
+      console.log('galleries user:', user)
       const galleries = await this.galleryRepository.getAllGalleries()
       return res.status(200).json({ message: 'Success', data: galleries })
     } catch (error) {

@@ -7,12 +7,10 @@ export abstract class CloudProviderService {
   protected s3Bucket: string
 
   constructor(private configService: ConfigService) {
-    this.region = this.configService.get<string>('AWS_REGION')
-    this.accessKey = this.configService.get<string>('AWS_ACCESS_KEY_ID')!
-    this.secretAccessKey = this.configService.get<string>(
-      'AWS_SECRET_ACCESS_KEY'
-    )!
-    this.s3Bucket = this.configService.get<string>('AWS_S3_BUCKET')!
+    this.region = this.configService.get<string>('s3.awsRegion')
+    this.accessKey = this.configService.get<string>('s3.awsId')!
+    this.secretAccessKey = this.configService.get<string>('s3.awsAccess')!
+    this.s3Bucket = this.configService.get<string>('s3.bucket')!
   }
 
   abstract uploadFile(
