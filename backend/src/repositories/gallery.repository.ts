@@ -69,6 +69,28 @@ export class GalleryRepository {
     }
   }
 
+  async updateGalleryWithUser(userGalleryData: {
+    clientId: string
+    galleryId: string
+  }) {
+    try {
+      console.log(userGalleryData.galleryId, userGalleryData.clientId)
+      await this.prisma.gallery.update({
+        where: { id: userGalleryData.galleryId },
+        data: { userUuid: userGalleryData.clientId },
+      })
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(
+          "Could not find gallery or it doesn't exist: " + error
+        )
+      }
+      throw new Error(
+        'There as an error while trying to assign user this gallery:' + error
+      )
+    }
+  }
+
   async getGallery(id: string) {
     try {
       return await this.prisma.gallery.findUnique({

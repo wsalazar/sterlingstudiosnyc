@@ -338,4 +338,19 @@ export class GalleryController {
       return res.status(status).json({ message: error.message })
     }
   }
+
+  @Post('/user')
+  async asignUserToGallery(
+    @Body() userGalleryData: { clientId: string; galleryId: string },
+    @Res() res: Response
+  ): Promise<Response> {
+    try {
+      const gallery =
+        await this.galleryRepository.updateGalleryWithUser(userGalleryData)
+      console.log(gallery)
+      return res.status(201).json({ message: 'Success', data: gallery })
+    } catch (error) {
+      return res.status(error.status).json({ message: error.message })
+    }
+  }
 }
