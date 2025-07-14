@@ -20,13 +20,13 @@ import {
   Res,
   createParamDecorator,
   ExecutionContext,
-  Req,
 } from '@nestjs/common'
 import { FilesInterceptor } from '@nestjs/platform-express'
-import { Gallery, User } from '@prisma/client'
+import { User } from '@prisma/client'
 import { CloudProviderService } from '@/services/cloudprovider.service'
 import { Response } from 'express'
 import { UserRepository } from '@/repositories/user.repository'
+import { v4 as uuidv4 } from 'uuid'
 
 interface GalleryImage {
   lastModified: number
@@ -35,12 +35,10 @@ interface GalleryImage {
   type: string
 }
 
-export const GetUser = createParamDecorator(
-  (data, context: ExecutionContext) => {
-    const request = context.switchToHttp().getRequest()
-    return request.user
-  }
-)
+export const GetUser = createParamDecorator((context: ExecutionContext) => {
+  const request = context.switchToHttp().getRequest()
+  return request.user
+})
 
 @Controller('v1/gallery')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -71,10 +69,8 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
-      console.log(files)
       let size = 0
       files.forEach((file) => (file.size += size))
-      console.log(size)
       let subdirectory = galleryData?.subdirectory ?? ''
       if (subdirectory) {
         if (!subdirectory.endsWith('/')) {
@@ -113,6 +109,7 @@ export class GalleryController {
         createdBy: user.id,
         bucketDirectory: subdirectory,
         totalSize: totalSize,
+        uuidLink: uuidv4(),
       })
       return res
         .status(201)
@@ -345,12 +342,13 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
-      const gallery =
-        await this.galleryRepository.updateGalleryWithUser(userGalleryData)
-      console.log(gallery)
-      return res.status(201).json({ message: 'Success', data: gallery })
+      await this.galleryRepository.updateGalleryWithUser(userGalleryData)
+      return res
+        .status(200)
+        .json({ message: 'Successfully added user to gallery!' })
     } catch (error) {
-      return res.status(error.status).json({ message: error.message })
+      const status = error.status || 500
+      return res.status(status).json({ message: error.message })
     }
   }
 }

@@ -32,6 +32,7 @@ model Gallery {
   totalSize         Int
   userUuid          String @default("")
   createdBy         String
+  uuidLink          String @default("")
   createAt          DateTime @default(now())
   updatedAt         DateTime @default(now())
 }
