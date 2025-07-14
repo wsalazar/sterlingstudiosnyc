@@ -8,6 +8,7 @@ import { DropboxService } from '../services/dropbox.service'
 import { ImageService } from '@/services/image.service'
 import { S3Service } from '@/services/s3.service'
 import { CloudProviderService } from '@/services/cloudprovider.service'
+import { UserRepository } from '@/repositories/user.repository'
 
 @Module({
   imports: [ConfigModule],
@@ -34,7 +35,8 @@ import { CloudProviderService } from '@/services/cloudprovider.service'
     PrismaService,
     PrismaClient,
     ImageService,
+    UserRepository,
   ],
-  exports: [GalleryRepository, PrismaClient],
+  exports: [GalleryRepository, PrismaClient, UserRepository],
 })
 export class GalleryModule {}

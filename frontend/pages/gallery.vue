@@ -14,11 +14,51 @@
         @record-deleted="fetchGalleryData"
         @show-overlay="editImages"
         @update-cell="editCell"
+        @selected-client="selectedClient"
       />
     </div>
   </div>
   <div v-if="!userIsAdmin">non-admin</div>
   <Spinner v-if="isLoading" />
+
+  <div
+    v-if="showOverlay"
+    class="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-50"
+  >
+    <div class="relative p-8 w-full max-w-md bg-white rounded-lg shadow-lg">
+      <button
+        class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        @click="closeOverlay"
+      >
+        &times;
+      </button>
+      <!-- Overlay Content Here -->
+      <slot name="overlay-content">
+        <h2 class="mb-4 text-lg font-bold">Client Selection Gallery</h2>
+        <p>
+          <span class="font-bold text-amber-500">{{ client }}</span> will be
+          sent this gallery,
+          <span class="font-bold text-amber-500">{{ galleryName }}</span
+          >.
+        </p>
+        <p>Are you sure?</p>
+        <div class="flex gap-4 justify-end mt-6">
+          <button
+            class="px-4 py-2 text-white bg-red-600 rounded hover:bg-blue-700"
+            @click="closeOverlay"
+          >
+            No
+          </button>
+          <button
+            class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+            @click="closeOverlay"
+          >
+            Yes
+          </button>
+        </div>
+      </slot>
+    </div>
+  </div>
 
   <div
     v-if="renderForm && !isLoading"
@@ -231,6 +271,8 @@ const removedImages = ref<{ imageName: string; price: string; id: string }[]>(
   []
 )
 const isLoading = ref(false)
+const galleryName = ref<string>('')
+const client = ref<string>('')
 const editUuId = ref('')
 const subdirectory = ref('')
 const newImageName = ref('')
@@ -239,6 +281,7 @@ const imageId = ref('')
 const isImageNameEditable = ref(false)
 const isPriceEditable = ref(false)
 const galleryHasBeenEdited = ref(false)
+const showOverlay = ref(false)
 const hasChanges = ref<{ imageName?: string; price?: string; id: string }[]>([])
 
 import { upload, gallery } from '../services/api'
@@ -337,6 +380,19 @@ const openModal = () => {
   editMode.value = false
 }
 
+const closeOverlay = () => {
+  showOverlay.value = false
+}
+
+const selectedClient = (
+  row: any,
+  clientSelected: { code: string; name: string }
+) => {
+  galleryName.value = row.original.name
+  client.value = clientSelected.name
+  showOverlay.value = true
+}
+
 const editCell = async (row: any, newValue: string, fieldName: string) => {
   const data = {
     newValue,
@@ -365,6 +421,7 @@ interface TableData {
   user: { name: string }
   updatedAt: string
   totalSize: number
+  clients: [{ id: string; name: string }]
   images: { imageName: string; price: number; id: string }[]
   bucketDirectory: string // change this to bucektSubdirectory
 }
@@ -372,6 +429,7 @@ interface TableData {
 const data = ref<TableData[]>([])
 
 const transformedData = computed(() => {
+  console.log(data.value)
   return data.value.map((item) => ({
     ...item,
     userDisplay: item.user?.name || 'No name',
@@ -380,6 +438,10 @@ const transformedData = computed(() => {
       imageName: image.imageName,
       price: image.price,
       id: image.id,
+    })),
+    clients: item.clients.map((client) => ({
+      name: client.name,
+      code: client.id,
     })),
     updatedAt: item.updatedAt
       ? new Date(item.updatedAt).toLocaleDateString('en-US', {
@@ -549,6 +611,10 @@ const columns: ColumnDef<TableData>[] = [
   {
     accessorKey: 'updatedAt',
     header: 'Date Modified',
+  },
+  {
+    accessorKey: 'clients',
+    header: 'Client',
   },
   {
     accessorKey: 'delete',
