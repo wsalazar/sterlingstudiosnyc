@@ -12,6 +12,7 @@ export class GalleryRepository {
     createdBy: string
     bucketDirectory: string
     totalSize: number
+    uuidLink: string
   }): Promise<Gallery> {
     console.log('images', galleryData.images)
     return await this.prisma.gallery.create({
@@ -29,6 +30,7 @@ export class GalleryRepository {
         createdBy: galleryData.createdBy,
         bucketDirectory: galleryData.bucketDirectory,
         totalSize: galleryData.totalSize,
+        uuidLink: galleryData.uuidLink,
       },
       include: {
         images: true,
