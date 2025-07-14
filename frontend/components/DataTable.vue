@@ -92,9 +92,20 @@
                 @keyup.tab="onTab(row, cell.column.id)"
                 @keyup.esc="cancelEdit"
               />
+
               <span v-else>
+                <span v-if="cell.column.id === 'clients'"
+                  ><Dropdown
+                    :options="row.original.clients"
+                    class="w-full"
+                    optionLabel="name"
+                    optionValue="code"
+                    placeholder="Select a client"
+                    @change="selectClient(row, $event)"
+                  />
+                </span>
                 <span
-                  v-if="cell.column.id === 'delete'"
+                  v-else-if="cell.column.id === 'delete'"
                   class="flex justify-center items-center w-full h-full text-center text-red-500 cursor-pointer"
                   @click="deleteRecord(row)"
                 >
@@ -201,6 +212,11 @@ import {
   faX,
 } from '@fortawesome/free-solid-svg-icons'
 
+import Dropdown from 'primevue/dropdown'
+import 'primevue/resources/themes/saga-blue/theme.css'
+import 'primevue/resources/primevue.min.css'
+import 'primeicons/primeicons.css'
+
 library.add(
   faSearch,
   faSort,
@@ -235,10 +251,19 @@ const cancelEdit = () => {
   editValue.value = ''
 }
 
+const selectClient = (row: any, event: any) => {
+  const selected = row.original.clients.find(
+    (client: any) => client.code === event.value
+  )
+  console.log(row, selected?.name)
+  emit('selected-client', row, selected)
+}
+
 const emit = defineEmits<{
   'record-deleted': []
   'show-overlay': [any]
   'update-cell': [row: any, cellValue: string, fieldName: string]
+  'selected-client': [row: any, selected: { code: string; name: string }]
 }>()
 
 const skipBlur = ref(false)
@@ -301,6 +326,7 @@ const isCellEditable = (cell: any) =>
     'delete',
     'bucketDirectory',
     'images',
+    'clients',
   ].includes(cell.column.id)
 
 const setEditMode = (row: any, cell: any) => {
