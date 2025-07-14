@@ -3,6 +3,7 @@ import { Roles } from '@/decorators/roles.decorator'
 import { JwtAuthGuard } from '@/guards/jwt-auth.guard'
 import { RolesGuard } from '@/guards/roles.guard'
 import { GalleryRepository } from '@/repositories/gallery.repository'
+import { ConfigService } from '@nestjs/config'
 import { ImageService } from '@/services/image.service'
 import { sanitizeFilename } from '@/utils/helper'
 import {
@@ -27,6 +28,7 @@ import { CloudProviderService } from '@/services/cloudprovider.service'
 import { Response } from 'express'
 import { UserRepository } from '@/repositories/user.repository'
 import { v4 as uuidv4 } from 'uuid'
+import { EmailService } from '@/services/email.service'
 
 interface GalleryImage {
   lastModified: number
@@ -35,10 +37,12 @@ interface GalleryImage {
   type: string
 }
 
-export const GetUser = createParamDecorator((context: ExecutionContext) => {
-  const request = context.switchToHttp().getRequest()
-  return request.user
-})
+export const GetUser = createParamDecorator(
+  (data, context: ExecutionContext) => {
+    const request = context.switchToHttp().getRequest()
+    return request.user
+  }
+)
 
 @Controller('v1/gallery')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -49,7 +53,9 @@ export class GalleryController {
     private readonly cloudProvider: CloudProviderService,
     private galleryRepository: GalleryRepository,
     private imageService: ImageService,
-    private userRepository: UserRepository
+    private userRepository: UserRepository,
+    private emailService: EmailService,
+    private configService: ConfigService
   ) {}
 
   @Post('/')
@@ -69,6 +75,7 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
+      console.log('tests')
       let size = 0
       files.forEach((file) => (file.size += size))
       let subdirectory = galleryData?.subdirectory ?? ''
@@ -343,6 +350,21 @@ export class GalleryController {
   ): Promise<Response> {
     try {
       await this.galleryRepository.updateGalleryWithUser(userGalleryData)
+      const gallery = await this.galleryRepository.getLinkFromGallerybyId(
+        userGalleryData.galleryId
+      )
+      const user = await this.userRepository.getUserById(
+        userGalleryData.clientId
+      )
+      console.log(gallery.uuidLink)
+      const galleryUrlLink = `${this.configService.get<string>('domain.url')}/gallery/user/${gallery.uuidLink}`
+      await this.emailService.sendEmail({
+        from: this.configService.get('SMTP_USER'), //change this to a configuration
+        to: user.email,
+        subject: 'Your gallery link, from Sterling Studios NYC',
+        html: `<h1>${user.name}</h1><br />Your gallery link <a href="${galleryUrlLink}" target="_blank">${user.name}'s gallery</a>.`,
+        text: `Welcome ${user.name}\nThe admin has been sent an email.`,
+      })
       return res
         .status(200)
         .json({ message: 'Successfully added user to gallery!' })

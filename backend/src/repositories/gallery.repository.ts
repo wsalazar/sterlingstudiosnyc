@@ -93,6 +93,24 @@ export class GalleryRepository {
     }
   }
 
+  async getLinkFromGallerybyId(id: string): Promise<{ uuidLink: string }> {
+    try {
+      return await this.prisma.gallery.findUnique({
+        where: { id },
+        select: { uuidLink: true },
+      })
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(
+          "Could not find gallery or it doesn't exist: " + error
+        )
+      }
+      throw new Error(
+        'There as an error while trying to access this gallery:' + error
+      )
+    }
+  }
+
   async getGallery(id: string) {
     try {
       return await this.prisma.gallery.findUnique({
