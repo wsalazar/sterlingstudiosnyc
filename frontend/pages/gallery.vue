@@ -51,7 +51,7 @@
           </button>
           <button
             class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
-            @click="closeOverlay"
+            @click="sendClientGallery"
           >
             Yes
           </button>
@@ -272,7 +272,9 @@ const removedImages = ref<{ imageName: string; price: string; id: string }[]>(
 )
 const isLoading = ref(false)
 const galleryName = ref<string>('')
+const galleryId = ref<string>('')
 const client = ref<string>('')
+const clientId = ref<string>('')
 const editUuId = ref('')
 const subdirectory = ref('')
 const newImageName = ref('')
@@ -384,12 +386,28 @@ const closeOverlay = () => {
   showOverlay.value = false
 }
 
+const sendClientGallery = async () => {
+  const payload = {
+    clientId: clientId.value,
+    galleryId: galleryId.value,
+  }
+  console.log(payload)
+  await gallery.assignUser(payload)
+  await fetchGalleryData()
+  closeOverlay()
+  toast.success(
+    `You have assigned ${client.value} the ${galleryName.value} gallery`
+  )
+}
+
 const selectedClient = (
   row: any,
   clientSelected: { code: string; name: string }
 ) => {
   galleryName.value = row.original.name
+  galleryId.value = row.original.id
   client.value = clientSelected.name
+  clientId.value = clientSelected.code
   showOverlay.value = true
 }
 
@@ -424,6 +442,7 @@ interface TableData {
   clients: [{ id: string; name: string }]
   images: { imageName: string; price: number; id: string }[]
   bucketDirectory: string // change this to bucektSubdirectory
+  userUuid: string
 }
 
 const data = ref<TableData[]>([])
@@ -443,6 +462,7 @@ const transformedData = computed(() => {
       name: client.name,
       code: client.id,
     })),
+    client: item.userUuid,
     updatedAt: item.updatedAt
       ? new Date(item.updatedAt).toLocaleDateString('en-US', {
           year: 'numeric',

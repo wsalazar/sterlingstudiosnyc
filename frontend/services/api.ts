@@ -130,6 +130,19 @@ export const gallery = {
   patch: async (id: string, data: { newValue: string; fieldName: string }) => {
     await api.patch(`v1/gallery/update-fields/${id}`, data)
   },
+  assignUser: async (galleryUserData: {
+    clientId: string
+    galleryId: string
+  }) => {
+    try {
+      return await api.post('/v1/gallery/user', galleryUserData)
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || error)
+      }
+      throw error
+    }
+  },
 }
 
 export const authApi = {

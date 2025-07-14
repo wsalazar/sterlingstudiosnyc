@@ -96,6 +96,7 @@
               <span v-else>
                 <span v-if="cell.column.id === 'clients'"
                   ><Dropdown
+                    v-model="row.original.userUuid"
                     :options="row.original.clients"
                     class="w-full"
                     optionLabel="name"
