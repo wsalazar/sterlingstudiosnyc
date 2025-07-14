@@ -15,19 +15,27 @@ import * as bcrypt from 'bcrypt'
 import { Public } from '../decorators/public.decorator'
 import { ConfigService } from '@nestjs/config'
 import { Response } from 'express'
+import { EmailService } from '@/services/email.service'
 
 @Controller('v1/auth')
 export class AuthController {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private emailService: EmailService
   ) {}
 
   @Public()
   @Post('user')
-  async createAdminUser(
-    @Body() userData: { email: string; password: string; name: string }
+  async createUser(
+    @Body()
+    userData: {
+      email: string
+      password: string
+      name: string
+      admin: boolean
+    }
   ) {
     try {
       // Check if user already exists
@@ -52,7 +60,7 @@ export class AuthController {
           email: userData.email,
           password: hashedPassword,
           name: userData.name,
-          admin: false,
+          admin: userData.admin,
         },
         select: {
           id: true,
@@ -62,6 +70,21 @@ export class AuthController {
           createdAt: true,
           updatedAt: true,
         },
+      })
+      await this.emailService.sendEmail({
+        from: this.configService.get('SMTP_USER'),
+        to: userData.email,
+        subject: 'Welcome to Sterling Studios NYC',
+        html: `<h1>Welcome ${userData.name}</h1><br />The admin has been sent an email.`,
+        text: `Welcome ${userData.name}\nThe admin has been sent an email.`,
+      })
+
+      await this.emailService.sendEmail({
+        from: this.configService.get('SMTP_USER'),
+        to: this.configService.get('SMTP_USER'),
+        subject: 'No Reply',
+        html: `${userData.name} has just joined. Please login to your account and assign his gallery.`,
+        text: `${userData.name} has just joined. Please login to your account and assign his gallery.`,
       })
 
       return newUser

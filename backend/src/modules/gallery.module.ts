@@ -9,6 +9,7 @@ import { ImageService } from '@/services/image.service'
 import { S3Service } from '@/services/s3.service'
 import { CloudProviderService } from '@/services/cloudprovider.service'
 import { UserRepository } from '@/repositories/user.repository'
+import { EmailService } from '@/services/email.service'
 
 @Module({
   imports: [ConfigModule],
@@ -36,6 +37,7 @@ import { UserRepository } from '@/repositories/user.repository'
     PrismaClient,
     ImageService,
     UserRepository,
+    EmailService,
   ],
   exports: [GalleryRepository, PrismaClient, UserRepository],
 })

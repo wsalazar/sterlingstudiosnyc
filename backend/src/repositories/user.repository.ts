@@ -19,4 +19,10 @@ export class UserRepository {
       },
     })
   }
+
+  async getUserById(clientId: string): Promise<User> {
+    return await this.prisma.user.findUnique({
+      where: { id: clientId },
+    })
+  }
 }
