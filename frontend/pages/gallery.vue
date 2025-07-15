@@ -18,7 +18,7 @@
       />
     </div>
   </div>
-  <div v-if="!userIsAdmin">non-admin</div>
+  <!-- <div v-if="!userIsAdmin">non-admin</div> -->
   <Spinner v-if="isLoading" />
 
   <div
@@ -391,7 +391,6 @@ const sendClientGallery = async () => {
     clientId: clientId.value,
     galleryId: galleryId.value,
   }
-  console.log(payload)
   await gallery.assignUser(payload)
   await fetchGalleryData()
   closeOverlay()

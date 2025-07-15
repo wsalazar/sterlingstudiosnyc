@@ -12,14 +12,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  password  String
-  admin     Boolean
-  galleries Gallery[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  name                  String
+  password              String
+  admin                 Boolean
+  galleries             Gallery[]
+  accessTokens          AccessToken[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Gallery {
@@ -32,7 +33,7 @@ model Gallery {
   totalSize         Int
   userUuid          String @default("")
   createdBy         String
-  uuidLink          String @default("")
+  accessTokens      AccessToken[]
   createAt          DateTime @default(now())
   updatedAt         DateTime @default(now())
 }
@@ -46,4 +47,14 @@ model Image {
   price       Float @default(0)
   createAt    DateTime @default(now())
   updatedAt   DateTime @default(now())
+}
+
+model AccessToken {
+  token       String @id @default(uuid())
+  gallery     Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  galleryId   String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  expiresAt   DateTime @default(now())
+  isActive    Boolean
 }

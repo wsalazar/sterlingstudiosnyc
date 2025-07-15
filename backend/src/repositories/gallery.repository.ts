@@ -12,7 +12,6 @@ export class GalleryRepository {
     createdBy: string
     bucketDirectory: string
     totalSize: number
-    uuidLink: string
   }): Promise<Gallery> {
     console.log('images', galleryData.images)
     return await this.prisma.gallery.create({
@@ -30,7 +29,6 @@ export class GalleryRepository {
         createdBy: galleryData.createdBy,
         bucketDirectory: galleryData.bucketDirectory,
         totalSize: galleryData.totalSize,
-        uuidLink: galleryData.uuidLink,
       },
       include: {
         images: true,
@@ -89,24 +87,6 @@ export class GalleryRepository {
       }
       throw new Error(
         'There as an error while trying to assign user this gallery:' + error
-      )
-    }
-  }
-
-  async getLinkFromGallerybyId(id: string): Promise<{ uuidLink: string }> {
-    try {
-      return await this.prisma.gallery.findUnique({
-        where: { id },
-        select: { uuidLink: true },
-      })
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException(
-          "Could not find gallery or it doesn't exist: " + error
-        )
-      }
-      throw new Error(
-        'There as an error while trying to access this gallery:' + error
       )
     }
   }

@@ -29,6 +29,7 @@ import { Response } from 'express'
 import { UserRepository } from '@/repositories/user.repository'
 import { v4 as uuidv4 } from 'uuid'
 import { EmailService } from '@/services/email.service'
+import { AccessTokenRepository } from '@/repositories/accessToken.repository'
 
 interface GalleryImage {
   lastModified: number
@@ -55,7 +56,8 @@ export class GalleryController {
     private imageService: ImageService,
     private userRepository: UserRepository,
     private emailService: EmailService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private accessTokenRepository: AccessTokenRepository
   ) {}
 
   @Post('/')
@@ -116,7 +118,6 @@ export class GalleryController {
         createdBy: user.id,
         bucketDirectory: subdirectory,
         totalSize: totalSize,
-        uuidLink: uuidv4(),
       })
       return res
         .status(201)
@@ -349,15 +350,19 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
-      await this.galleryRepository.updateGalleryWithUser(userGalleryData)
-      const gallery = await this.galleryRepository.getLinkFromGallerybyId(
-        userGalleryData.galleryId
-      )
+      console.log('user gallery data', userGalleryData)
       const user = await this.userRepository.getUserById(
         userGalleryData.clientId
       )
-      console.log(gallery.uuidLink)
-      const galleryUrlLink = `${this.configService.get<string>('domain.url')}/gallery/user/${gallery.uuidLink}`
+      const token = uuidv4()
+      const galleryUrlLink = `${this.configService.get<string>('domain.url')}/gallery/user/${token}`
+      await this.accessTokenRepository.save({
+        token: token,
+        galleryId: userGalleryData.galleryId,
+        userId: userGalleryData.clientId,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        isActive: true,
+      })
       await this.emailService.sendEmail({
         from: this.configService.get('SMTP_USER'), //change this to a configuration
         to: user.email,
