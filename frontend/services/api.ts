@@ -143,6 +143,16 @@ export const gallery = {
       throw error
     }
   },
+  validateUserToken: async (token: string) => {
+    try {
+      return await api.get(`/v1/gallery/user/validate/${token}`)
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || error)
+      }
+      throw error
+    }
+  },
 }
 
 export const authApi = {
