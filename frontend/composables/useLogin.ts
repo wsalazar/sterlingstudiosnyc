@@ -18,14 +18,15 @@ export const useLogin = () => {
         password,
         rememberMe: false,
       })
-      if (response.success) {
+      console.log(response)
+      if (response.data.success) {
         isAuthenticated.value = true
-        isAdmin.value = response.user.admin
-        userStore.setUserName(response.user.name)
+        isAdmin.value = response.data.user.admin
+        userStore.setUserName(response.data.user.name)
         return {
           success: true,
-          isAdmin: response.user.admin,
-          user: response.user.name,
+          isAdmin: response.data.user.admin,
+          user: response.data.user.name,
         }
       }
       return { success: false }

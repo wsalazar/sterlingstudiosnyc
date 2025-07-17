@@ -30,6 +30,7 @@ import { UserRepository } from '@/repositories/user.repository'
 import { v4 as uuidv4 } from 'uuid'
 import { EmailService } from '@/services/email.service'
 import { AccessTokenRepository } from '@/repositories/accessToken.repository'
+import { JwtService } from '@nestjs/jwt'
 
 interface GalleryImage {
   lastModified: number
@@ -57,7 +58,8 @@ export class GalleryController {
     private userRepository: UserRepository,
     private emailService: EmailService,
     private configService: ConfigService,
-    private accessTokenRepository: AccessTokenRepository
+    private accessTokenRepository: AccessTokenRepository,
+    private jwtService: JwtService
   ) {}
 
   @Post('/')
@@ -345,7 +347,7 @@ export class GalleryController {
   }
 
   @Post('/user')
-  async asignUserToGallery(
+  async assignUserToGallery(
     @Body() userGalleryData: { clientId: string; galleryId: string },
     @Res() res: Response
   ): Promise<Response> {
@@ -364,10 +366,15 @@ export class GalleryController {
         isActive: true,
       })
       await this.emailService.sendEmail({
-        from: this.configService.get('SMTP_USER'), //change this to a configuration
+        from: this.configService.get<string>('email.user'),
         to: user.email,
         subject: 'Your gallery link, from Sterling Studios NYC',
-        html: `<h1>${user.name}</h1><br />Your gallery link <a href="${galleryUrlLink}" target="_blank">${user.name}'s gallery</a>.`,
+        html: `<img
+                src="/assets/images/Logo_Final2022.jpg"
+                alt="Sterling Studios NYC Logo"
+                width="100px"
+                height="100px"
+              /><h1>${user.name}</h1><br />Your gallery link <a href="${galleryUrlLink}" target="_blank">${user.name}'s gallery</a>.`,
         text: `Welcome ${user.name}\nThe admin has been sent an email.`,
       })
       return res
@@ -376,6 +383,106 @@ export class GalleryController {
     } catch (error) {
       const status = error.status || 500
       return res.status(status).json({ message: error.message })
+    }
+  }
+
+  @Public()
+  @Get('/user/validate/:token')
+  async validateUserToken(@Param('token') token: string, @Res() res: Response) {
+    try {
+      const access = await this.accessTokenRepository.getToken(token)
+      const expiredMinutes = new Date(Date.now() - 10 * 60 * 1000)
+      console.log(access.expiresAt, expiredMinutes)
+      if (access.expiresAt <= expiredMinutes) {
+        throw new Error('Token has expired!')
+      }
+      console.log('token', token)
+    } catch (error) {
+      /**
+       * @todo should not be a 500 if token is expired
+       */
+      const status = error.status || 500
+      return res.status(status).json({ message: error.message })
+    }
+  }
+
+  @Public()
+  @Get('/user/send-new-link/:token')
+  async sendNewLink(
+    @Param('token') token: string,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<Response> {
+    try {
+      const access = await this.accessTokenRepository.getToken(token)
+      const user = await this.userRepository.getUserById(access.userId)
+      await this.accessTokenRepository.deactivateToken(token)
+      await this.accessTokenRepository.save({
+        token: uuidv4(),
+        galleryId: access.galleryId,
+        userId: access.userId,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        isActive: true,
+      })
+      const galleryUrlLink = `${this.configService.get<string>('domain.url')}/gallery/user/${token}`
+      const logoUrl = `${this.configService.get<string>('domain.url')}/images/Logo_Final2022.jpg`
+
+      console.log(user)
+      const accessSecret = this.configService.get<string>('auth.jwtSecret')
+
+      const payload = { email: user.email, sub: user.id }
+      console.log(payload)
+      console.log('payload', payload, typeof payload, JSON.stringify(payload))
+      const accessToken = await this.jwtService.sign(payload, {
+        secret: accessSecret,
+        expiresIn: '60m',
+      })
+      /**
+       * @todo send email after login
+       */
+      console.log('access token', accessToken)
+
+      response.cookie('sterling_session', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'lax',
+        maxAge: 3600000,
+      })
+      const { email, name, admin } = user
+
+      const responseData = {
+        user: {
+          email,
+          name,
+          admin,
+        },
+        success: true,
+      }
+      await this.emailService.sendEmail({
+        from: this.configService.get<string>('email.user'), //change this to a configuration
+        to: user.email,
+        subject: 'Your gallery link, from Sterling Studios NYC',
+        html: `<img
+                src="${logoUrl}"
+                alt="Sterling Studios NYC Logo"
+                width="100px"
+                height="100px"
+              /><h1>${user.name}</h1><br />Your gallery link <a href="${galleryUrlLink}" target="_blank">${user.name}'s gallery</a>.`,
+        text: `Welcome ${user.name}\nThe admin has been sent an email.`,
+      })
+      // return {
+      //   user: {
+      //     email: user.email,
+      //     name: user.name,
+      //     admin: user.admin,
+      //   },
+      //   success: true,
+      // }
+      return response
+        .status(200)
+        .json({ message: 'Success', data: responseData })
+    } catch (error) {
+      const status = error.status || 500
+      return response.status(status).json({ message: error.message })
     }
   }
 }

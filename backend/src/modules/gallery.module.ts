@@ -11,6 +11,7 @@ import { CloudProviderService } from '@/services/cloudprovider.service'
 import { UserRepository } from '@/repositories/user.repository'
 import { EmailService } from '@/services/email.service'
 import { AccessTokenRepository } from '@/repositories/accessToken.repository'
+import { JwtService } from '@nestjs/jwt'
 
 @Module({
   imports: [ConfigModule],
@@ -40,12 +41,14 @@ import { AccessTokenRepository } from '@/repositories/accessToken.repository'
     UserRepository,
     EmailService,
     AccessTokenRepository,
+    JwtService,
   ],
   exports: [
     GalleryRepository,
     PrismaClient,
     UserRepository,
     AccessTokenRepository,
+    JwtService,
   ],
 })
 export class GalleryModule {}

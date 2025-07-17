@@ -20,6 +20,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard'
     ConfigModule.forRoot({
       load: [configuration],
       isGlobal: true,
+      envFilePath: '.env',
     }),
     PrismaModule,
     SupabaseModule,

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useUserStore } from '@/stores/user'
 
 const api = axios.create({
   baseURL: 'http://localhost:3001',
@@ -151,6 +152,32 @@ export const gallery = {
         throw new Error(error.response?.data?.message || error)
       }
       throw error
+    }
+  },
+  sendNewLink: async (token: string) => {
+    const { isAuthenticated, isAdmin, isLoading } = useAuth()
+    const userStore = useUserStore()
+    try {
+      const response = await api.get(`/v1/gallery/user/send-new-link/${token}`)
+      if (response.data.data.success) {
+        isAuthenticated.value = true
+        isAdmin.value = response.data.data.user.admin
+        userStore.setUserName(response.data.data.user.name)
+        return {
+          success: true,
+          isAdmin: response.data.data.user.admin,
+          user: response.data.data.user.name,
+        }
+      }
+      return { success: false }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log('hahaha', error)
+        throw new Error(
+          error.response?.data?.message || error.message || String(error)
+        )
+      }
+      throw new Error(String(error))
     }
   },
 }

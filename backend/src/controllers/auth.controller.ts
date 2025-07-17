@@ -72,18 +72,28 @@ export class AuthController {
         },
       })
       await this.emailService.sendEmail({
-        from: this.configService.get('SMTP_USER'),
+        from: this.configService.get<string>('email.user'),
         to: userData.email,
         subject: 'Welcome to Sterling Studios NYC',
-        html: `<h1>Welcome ${userData.name}</h1><br />The admin has been sent an email.`,
+        html: `<img
+                src="/assets/images/Logo_Final2022.jpg"
+                alt="Sterling Studios NYC Logo"
+                width="100px"
+                height="100px"
+              /><h1>Welcome ${userData.name}</h1><br />The admin has been sent an email.`,
         text: `Welcome ${userData.name}\nThe admin has been sent an email.`,
       })
 
       await this.emailService.sendEmail({
-        from: this.configService.get('SMTP_USER'),
-        to: this.configService.get('SMTP_USER'),
+        from: this.configService.get<string>('email.user'),
+        to: this.configService.get<string>('email.user'),
         subject: 'No Reply',
-        html: `${userData.name} has just joined. Please login to your account and assign his gallery.`,
+        html: `<img
+                src="/assets/images/Logo_Final2022.jpg"
+                alt="Sterling Studios NYC Logo"
+                width="100px"
+                height="100px"
+              />${userData.name} has just joined. Please login to your account and assign his gallery.`,
         text: `${userData.name} has just joined. Please login to your account and assign his gallery.`,
       })
 
@@ -104,7 +114,7 @@ export class AuthController {
   async login(
     @Body() loginData: { email: string; password: string },
     @Res({ passthrough: true }) response: Response
-  ): Promise<{ user: object; success: boolean }> {
+  ): Promise<Response> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email: loginData.email },
@@ -122,8 +132,10 @@ export class AuthController {
       if (!isPasswordValid) {
         throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED)
       }
+      console.log('user', user)
 
       const payload = { email: user.email, sub: user.id }
+      console.log(payload)
       const token = this.jwtService.sign(payload)
 
       response.cookie('sterling_session', token, {
@@ -132,15 +144,20 @@ export class AuthController {
         sameSite: 'lax',
         maxAge: 3600000,
       })
+      const { email, name, admin } = user
 
-      return {
+      const responseData = {
         user: {
-          email: user.email,
-          name: user.name,
-          admin: user.admin,
+          email,
+          name,
+          admin,
         },
         success: true,
       }
+
+      return response
+        .status(200)
+        .json({ message: 'Success', data: responseData })
     } catch (error) {
       if (error instanceof HttpException) {
         throw error
