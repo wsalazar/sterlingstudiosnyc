@@ -19,6 +19,7 @@ export default defineNuxtConfig({
           content: 'Sterling Studios NYC - Your premier recording studio',
         },
       ],
+      link: [{ rel: 'icon', type: 'image/png', href: '/images/favicon.png' }],
     },
   },
   css: ['~/assets/css/main.css'],

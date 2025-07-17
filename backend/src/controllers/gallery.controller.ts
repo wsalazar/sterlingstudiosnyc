@@ -413,6 +413,9 @@ export class GalleryController {
     @Res({ passthrough: true }) response: Response
   ): Promise<Response> {
     try {
+      /**
+       * @Todo how to rate limit tokens
+       */
       const access = await this.accessTokenRepository.getToken(token)
       const user = await this.userRepository.getUserById(access.userId)
       await this.accessTokenRepository.deactivateToken(token)
@@ -425,13 +428,8 @@ export class GalleryController {
       })
       const galleryUrlLink = `${this.configService.get<string>('domain.url')}/gallery/user/${token}`
       const logoUrl = `${this.configService.get<string>('domain.url')}/images/Logo_Final2022.jpg`
-
-      console.log(user)
       const accessSecret = this.configService.get<string>('auth.jwtSecret')
-
       const payload = { email: user.email, sub: user.id }
-      console.log(payload)
-      console.log('payload', payload, typeof payload, JSON.stringify(payload))
       const accessToken = await this.jwtService.sign(payload, {
         secret: accessSecret,
         expiresIn: '60m',
@@ -469,14 +467,7 @@ export class GalleryController {
               /><h1>${user.name}</h1><br />Your gallery link <a href="${galleryUrlLink}" target="_blank">${user.name}'s gallery</a>.`,
         text: `Welcome ${user.name}\nThe admin has been sent an email.`,
       })
-      // return {
-      //   user: {
-      //     email: user.email,
-      //     name: user.name,
-      //     admin: user.admin,
-      //   },
-      //   success: true,
-      // }
+
       return response
         .status(200)
         .json({ message: 'Success', data: responseData })
