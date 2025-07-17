@@ -26,10 +26,17 @@
 
           <main class="flex-grow">
             <div class="container px-4 py-8 mx-auto">
-              <div>
-                Test
-                <!-- <h1>User Gallery</h1> -->
-                <!-- <p>User UUID: {{ uuid }}</p> -->
+              <div v-if="showLinkForNewToken">
+                You're viewing this page as a guest. To access your gallery,
+                request a new link.
+                <div class="flex gap-4 justify-start mt-6">
+                  <button
+                    class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+                    @click="sendNewLink"
+                  >
+                    Request New Link
+                  </button>
+                </div>
               </div>
             </div>
             <div
@@ -71,9 +78,8 @@
 import { useRoute } from 'vue-router'
 import { gallery } from '../services/api'
 import { useToast } from 'vue-toastification'
-import { useUserStore } from '@/stores/user'
-const userStore = useUserStore()
 
+const showLinkForNewToken = ref(false)
 const toast = useToast()
 const route = useRoute()
 const showOverlay = ref(false)
@@ -113,5 +119,6 @@ const sendNewLink = async () => {
 
 const cancelToken = () => {
   showOverlay.value = false
+  showLinkForNewToken.value = true
 }
 </script>
