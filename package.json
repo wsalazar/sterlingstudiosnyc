@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@types/passport-jwt": "^4.0.1",
-    "concurrently": "^8.2.2",
-    "chokidar-cli": "^3.0.0"
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^8.2.2"
   },
   "dependencies": {
     "@nestjs/jwt": "^11.0.0",

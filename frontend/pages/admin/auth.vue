@@ -100,6 +100,7 @@ const handleSubmit = async () => {
     isLoading.value = true
     errorMessage.value = ''
     const response = await login(email.value, password.value)
+    console.log(response)
     if (response.success) {
       const userStore = useUserStore()
       userStore.setUserName(response.user)

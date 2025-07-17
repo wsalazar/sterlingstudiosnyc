@@ -13,11 +13,11 @@ const cookieExtractor = (req: Request): string | null => {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(configService: ConfigService) {
     super({
       jwtFromRequest: cookieExtractor,
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: configService.get<string>('auth.jwtSecret'),
     })
   }
 
