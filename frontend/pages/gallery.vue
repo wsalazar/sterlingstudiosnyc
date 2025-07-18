@@ -447,7 +447,6 @@ interface TableData {
 const data = ref<TableData[]>([])
 
 const transformedData = computed(() => {
-  console.log(data.value)
   return data.value.map((item) => ({
     ...item,
     userDisplay: item.user?.name || 'No name',

@@ -73,6 +73,7 @@ const user = computed(() => {
   if (isAuthenticated.value && !userStore.getUserName) {
     return ''
   }
+  console.log('account menu ', userStore.getUserName)
   return userStore.getUserName || 'Guest'
 })
 

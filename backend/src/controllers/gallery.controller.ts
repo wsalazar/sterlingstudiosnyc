@@ -391,60 +391,11 @@ export class GalleryController {
   async validateUserToken(@Param('token') token: string, @Res() res: Response) {
     try {
       const access = await this.accessTokenRepository.getToken(token)
+      const user = await this.userRepository.getUserById(access.userId)
       const expiredMinutes = new Date(Date.now() - 10 * 60 * 1000)
-      console.log(access.expiresAt, expiredMinutes)
       if (access.expiresAt <= expiredMinutes) {
         throw new Error('Token has expired!')
       }
-      console.log('token', token)
-    } catch (error) {
-      /**
-       * @todo should not be a 500 if token is expired
-       */
-      const status = error.status || 500
-      return res.status(status).json({ message: error.message })
-    }
-  }
-
-  @Public()
-  @Get('/user/send-new-link/:token')
-  async sendNewLink(
-    @Param('token') token: string,
-    @Res({ passthrough: true }) response: Response
-  ): Promise<Response> {
-    try {
-      /**
-       * @Todo how to rate limit tokens
-       */
-      const access = await this.accessTokenRepository.getToken(token)
-      const user = await this.userRepository.getUserById(access.userId)
-      await this.accessTokenRepository.deactivateToken(token)
-      await this.accessTokenRepository.save({
-        token: uuidv4(),
-        galleryId: access.galleryId,
-        userId: access.userId,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-        isActive: true,
-      })
-      const galleryUrlLink = `${this.configService.get<string>('domain.url')}/gallery/user/${token}`
-      const logoUrl = `${this.configService.get<string>('domain.url')}/images/Logo_Final2022.jpg`
-      const accessSecret = this.configService.get<string>('auth.jwtSecret')
-      const payload = { email: user.email, sub: user.id }
-      const accessToken = await this.jwtService.sign(payload, {
-        secret: accessSecret,
-        expiresIn: '60m',
-      })
-      /**
-       * @todo send email after login
-       */
-      console.log('access token', accessToken)
-
-      response.cookie('sterling_session', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development',
-        sameSite: 'lax',
-        maxAge: 3600000,
-      })
       const { email, name, admin } = user
 
       const responseData = {
@@ -455,6 +406,55 @@ export class GalleryController {
         },
         success: true,
       }
+
+      const accessSecret = this.configService.get<string>('auth.jwtSecret')
+      const payload = { email: user.email, sub: user.id }
+      const accessToken = await this.jwtService.sign(payload, {
+        secret: accessSecret,
+        expiresIn: '60m',
+      })
+
+      res.cookie('sterling_session', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'lax',
+        maxAge: 3600000,
+      })
+      return res.status(200).json({ message: 'Success', data: responseData })
+    } catch (error) {
+      /**
+       * @todo should not be a 500 if token is expired
+       */
+      const status = error.status || 500
+      return res.status(status).json({ message: error.message })
+    }
+  }
+
+  @Public()
+  @Get('/user/send-new-link/:token/:overwrite')
+  async sendNewLink(
+    @Param('token') token: string,
+    @Param('overwrite') overwrite: boolean,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<Response> {
+    try {
+      /**
+       * @Todo how to rate limit tokens
+       */
+      const access = await this.accessTokenRepository.getToken(token, overwrite)
+      const user = await this.userRepository.getUserById(access.userId)
+      await this.accessTokenRepository.deactivateToken(token)
+      const newToken = uuidv4()
+      await this.accessTokenRepository.save({
+        token: newToken,
+        galleryId: access.galleryId,
+        userId: access.userId,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        isActive: true,
+      })
+      const galleryUrlLink = `${this.configService.get<string>('domain.url')}/gallery/user/${newToken}`
+      const logoUrl = `${this.configService.get<string>('domain.url')}/images/Logo_Final2022.jpg`
+
       await this.emailService.sendEmail({
         from: this.configService.get<string>('email.user'), //change this to a configuration
         to: user.email,
@@ -470,7 +470,7 @@ export class GalleryController {
 
       return response
         .status(200)
-        .json({ message: 'Success', data: responseData })
+        .json({ message: 'Email was sent to user!', data: { success: true } })
     } catch (error) {
       const status = error.status || 500
       return response.status(status).json({ message: error.message })
