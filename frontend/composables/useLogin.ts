@@ -18,7 +18,6 @@ export const useLogin = () => {
         password,
         rememberMe: false,
       })
-      console.log(response)
       if (response.data.success) {
         isAuthenticated.value = true
         isAdmin.value = response.data.user.admin

@@ -1,7 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaClient, AccessToken } from '@prisma/client'
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
-import { NotFoundError } from 'rxjs'
 
 @Injectable()
 export class AccessTokenRepository {
@@ -22,33 +20,41 @@ export class AccessTokenRepository {
     })
   }
 
-  async getToken(token: string) {
+  async getToken(token: string, overwrite: boolean = false) {
     try {
-      return await this.prisma.accessToken.findUniqueOrThrow({
-        where: { token, isActive: true },
+      const accessToken = await this.prisma.accessToken.findUnique({
+        where: { token },
         select: {
           userId: true,
           galleryId: true,
           expiresAt: true,
           isActive: true,
         },
-      })
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
+      })      
+      if (!accessToken) {
         throw new NotFoundException(
           "Could not find token. Either it's inactive or does not exist. Please check your spam for an email from Sterling Studios NYC."
-        )
+        );
       }
-      throw new Error(
-        'There as an error while trying to access user token:' + error
-      )
+      if (accessToken.isActive === false && overwrite === false) {
+        throw new BadRequestException('Token has expired or is inactive.');
+
+      }
+
+      // // Check if expired
+      if (accessToken.expiresAt && new Date(accessToken.expiresAt) < new Date() && !overwrite) {
+        throw new BadRequestException('Token has expired.');
+      }
+      return accessToken
+    } catch (error) {
+      throw error;
     }
   }
 
   async deactivateToken(token: string) {
     try {
       return await this.prisma.accessToken.update({
-        where: { token, isActive: true },
+        where: { token },
         data: {
           isActive: false,
         },

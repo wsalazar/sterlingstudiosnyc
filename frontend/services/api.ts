@@ -64,7 +64,6 @@ export const upload = {
       const response = await api.post('v1/gallery', formData)
       return response.data
     } catch (error) {
-      console.log(error)
       if (axios.isAxiosError(error)) {
         throw new Error(
           error.response?.data?.message || 'Failed to upload images'
@@ -146,33 +145,33 @@ export const gallery = {
   },
   validateUserToken: async (token: string) => {
     try {
+      /**
+       * @todo I should log the user in here. If the token is valid
+       */
       return await api.get(`/v1/gallery/user/validate/${token}`)
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || error)
-      }
       throw error
     }
   },
   sendNewLink: async (token: string) => {
-    const { isAuthenticated, isAdmin, isLoading } = useAuth()
-    const userStore = useUserStore()
     try {
-      const response = await api.get(`/v1/gallery/user/send-new-link/${token}`)
+      const overwrite = true
+      const response = await api.get(
+        `/v1/gallery/user/send-new-link/${token}/${overwrite}`
+      )
+      console.log(response)
+      /**
+       * @todo have to rework this. I should not log the user in. i don't thin I should. Will have to think more on this.
+       */
       if (response.data.data.success) {
-        isAuthenticated.value = true
-        isAdmin.value = response.data.data.user.admin
-        userStore.setUserName(response.data.data.user.name)
         return {
           success: true,
-          isAdmin: response.data.data.user.admin,
-          user: response.data.data.user.name,
+          message: response.data.message,
         }
       }
       return { success: false }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.log('hahaha', error)
         throw new Error(
           error.response?.data?.message || error.message || String(error)
         )

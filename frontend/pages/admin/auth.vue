@@ -100,14 +100,12 @@ const handleSubmit = async () => {
     isLoading.value = true
     errorMessage.value = ''
     const response = await login(email.value, password.value)
-    console.log(response)
     if (response.success) {
       const userStore = useUserStore()
       userStore.setUserName(response.user)
       await navigateTo('/')
     }
   } catch (error) {
-    console.error('Login failed:', error)
     errorMessage.value = error instanceof Error ? error.message : 'Login failed'
   } finally {
     isLoading.value = false

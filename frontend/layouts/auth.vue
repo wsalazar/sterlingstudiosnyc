@@ -26,6 +26,13 @@
 
           <main class="flex-grow">
             <div class="container px-4 py-8 mx-auto">
+              <div v-if="displaySentEmail">
+                You have been sent an email with a new token.
+              </div>
+
+              <div v-if="accessDenied">
+                You do not have access to this platform.
+              </div>
               <div v-if="showLinkForNewToken">
                 You're viewing this page as a guest. To access your gallery,
                 request a new link.
@@ -76,24 +83,53 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
+import { useAuth } from '~/composables/useAuth'
+
 import { gallery } from '../services/api'
 import { useToast } from 'vue-toastification'
+import { useUserStore } from '@/stores/user'
 
 const showLinkForNewToken = ref(false)
+const accessDenied = ref(false)
+const displaySentEmail = ref(false)
 const toast = useToast()
 const route = useRoute()
 const showOverlay = ref(false)
-console.log(route.params.uuid)
 const uuid = computed(() => route.params.uuid)
-console.log('uuid', uuid.value)
 try {
-  const validatedToken = await gallery.validateUserToken(
+  const { isAuthenticated, isAdmin } = useAuth()
+
+  const userStore = useUserStore()
+
+  const response = await gallery.validateUserToken(
     Array.isArray(uuid.value) ? uuid.value[0] : uuid.value
   )
-  console.log(validatedToken, 'validated')
+  isAdmin.value = false
+  isAuthenticated.value = false
+  userStore.clearUserName()
+  if (response.data.data.success) {
+    isAuthenticated.value = true
+    isAdmin.value = response.data.data.user.admin
+    userStore.setUserName(response.data.data.user.name)
+    navigateTo('/gallery')
+  }
 } catch (error) {
-  console.log(error, 'error')
-  showOverlay.value = true
+  if (
+    error &&
+    typeof error === 'object' &&
+    'response' in error &&
+    (error as any).response?.status === 404
+  ) {
+    accessDenied.value = true
+  }
+  if (
+    error &&
+    typeof error === 'object' &&
+    'response' in error &&
+    (error as any).response?.status === 400
+  ) {
+    showOverlay.value = true
+  }
 }
 
 const sendNewLink = async () => {
@@ -101,14 +137,12 @@ const sendNewLink = async () => {
     const response = await gallery.sendNewLink(
       Array.isArray(uuid.value) ? uuid.value[0] : uuid.value
     )
-    console.log(response)
     if (response.success) {
-      console.log('haha')
       showOverlay.value = false
-      await navigateTo('/')
+      displaySentEmail.value = true
+      toast.success(response.message)
     }
   } catch (error) {
-    console.log(error)
     if (error instanceof Error) {
       toast.error(error.message)
     } else {
