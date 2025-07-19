@@ -18,7 +18,6 @@
       />
     </div>
   </div>
-  <!-- <div v-if="!userIsAdmin">non-admin</div> -->
   <Spinner v-if="isLoading" />
 
   <div v-if="!userIsAdmin" class="p-4 mt-4">
@@ -36,7 +35,6 @@
       >
         &times;
       </button>
-      <!-- Overlay Content Here -->
       <slot name="overlay-content">
         <h2 class="mb-4 text-lg font-bold">Client Selection Gallery</h2>
         <p>
