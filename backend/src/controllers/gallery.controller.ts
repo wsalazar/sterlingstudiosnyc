@@ -516,7 +516,6 @@ export class GalleryController {
     })
   }
 
-  @Public()
   @Get('/user/image/:galleryUuid/:imageUuid')
   async fetchSingleImage(
     @Param('galleryUuid') galleryUuid: string,
