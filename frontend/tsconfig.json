@@ -11,7 +11,7 @@
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
-    "types": ["node", "nuxt"],
+    "types": ["node", "nuxt", "@types/node", "@nuxt/types"],
     "paths": {
       "@/*": ["./*"],
       "~/*": ["./*"],

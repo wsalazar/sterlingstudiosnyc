@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { PrismaClient, AccessToken } from '@prisma/client'
 
 @Injectable()
@@ -30,24 +34,43 @@ export class AccessTokenRepository {
           expiresAt: true,
           isActive: true,
         },
-      })      
+      })
       if (!accessToken) {
         throw new NotFoundException(
           "Could not find token. Either it's inactive or does not exist. Please check your spam for an email from Sterling Studios NYC."
-        );
+        )
       }
       if (accessToken.isActive === false && overwrite === false) {
-        throw new BadRequestException('Token has expired or is inactive.');
-
+        throw new BadRequestException('Token has expired or is inactive.')
       }
 
       // // Check if expired
-      if (accessToken.expiresAt && new Date(accessToken.expiresAt) < new Date() && !overwrite) {
-        throw new BadRequestException('Token has expired.');
+      if (
+        accessToken.expiresAt &&
+        new Date(accessToken.expiresAt) < new Date() &&
+        !overwrite
+      ) {
+        throw new BadRequestException('Token has expired.')
       }
       return accessToken
     } catch (error) {
-      throw error;
+      throw error
+    }
+  }
+
+  async getGalleryIdbyUserId(userUuid: string) {
+    try {
+      /**
+       * @todo This query may have to add galleryId to where clause
+       */
+      return await this.prisma.accessToken.findFirst({
+        where: { userId: userUuid },
+        select: {
+          galleryId: true,
+        },
+      })
+    } catch (error) {
+      throw error
     }
   }
 

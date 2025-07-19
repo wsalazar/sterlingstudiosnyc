@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     strict: true,
     typeCheck: false,
   },
+
   app: {
     head: {
       title: 'Sterling Studios NYC',
@@ -31,6 +32,12 @@ export default defineNuxtConfig({
   },
   vite: {
     server: {
+      proxy: {
+        '/v1/gallery': {
+          target: 'http://localhost:3001', // this will have to change for production
+          changeOrigin: true,
+        },
+      },
       hmr: {
         clientPort: 3000,
         protocol: 'ws',

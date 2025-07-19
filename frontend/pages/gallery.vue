@@ -21,6 +21,10 @@
   <!-- <div v-if="!userIsAdmin">non-admin</div> -->
   <Spinner v-if="isLoading" />
 
+  <div v-if="!userIsAdmin" class="p-4 mt-4">
+    <UserGallery :galleryData="galleryData" />
+  </div>
+
   <div
     v-if="showOverlay"
     class="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-50"
@@ -293,6 +297,10 @@ import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { type ColumnDef } from '@tanstack/vue-table'
 import { useToast } from 'vue-toastification'
 import Spinner from '@/components/Spinner.vue'
+import { getGalleryStore } from '../stores/gallery'
+const galleryData = computed(() => getGalleryStore().getGallery)
+console.log(galleryData, galleryData.value)
+
 const toast = useToast()
 
 library.add(faPlus, faTimes)
@@ -374,7 +382,9 @@ const fetchGalleryData = async () => {
 }
 
 onMounted(async () => {
-  await fetchGalleryData()
+  if (userIsAdmin) {
+    await fetchGalleryData()
+  }
 })
 
 const openModal = () => {

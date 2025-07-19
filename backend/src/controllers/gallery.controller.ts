@@ -404,6 +404,10 @@ export class GalleryController {
           name,
           admin,
         },
+        gallery: {
+          galleryUuid: access.galleryId,
+          userUuid: access.userId,
+        },
         success: true,
       }
 
@@ -475,5 +479,58 @@ export class GalleryController {
       const status = error.status || 500
       return response.status(status).json({ message: error.message })
     }
+  }
+
+  @Get('images/:id')
+  async getImage(@Param('id') id: string, @Res() res: Response) {
+    // // const stream = fs.createReadStream(⁠ /path/to/image/${id}.jpg ⁠);
+    // res.set({
+    //   'Content-Type': 'image/jpeg',
+    // });
+    // stream.pipe(res);
+  }
+
+  @Get('/user/fetch-images/:userUuid')
+  async fetchUserImages(
+    @Param('userUuid') userUuid: string,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<Response> {
+    const accessToken =
+      await this.accessTokenRepository.getGalleryIdbyUserId(userUuid)
+    const gallery = await this.galleryRepository.getGalleryById(
+      accessToken.galleryId
+    )
+    const images = gallery.images.map((images) => images.id)
+
+    return response.status(200).json({
+      data: {
+        galleryId: accessToken.galleryId,
+        imageIds: images,
+        imageCount: images.length,
+        bucketDirectory: gallery.bucketDirectory,
+      },
+      success: true,
+    })
+  }
+
+  @Public()
+  @Get('/user/image/:galleryUuid/:imageUuid')
+  async fetchSingleImage(
+    @Param('galleryUuid') galleryUuid: string,
+    @Param('imageUuid') imageUuid: string,
+    @Res() response: Response
+  ): Promise<Response> {
+    const gallery = await this.galleryRepository.getGalleryById(galleryUuid)
+    this.imageService.setSubdirectory(gallery.bucketDirectory)
+    const image = gallery.images.find((image) => image.id === imageUuid)
+    if (!image) {
+      return response.status(404).json({ error: 'Image not found!' })
+    }
+    const stream = await this.imageService.getImageStream(image)
+    /**
+     * @todo this will have to by dynamic based on the image extension
+     */
+    response.set({ 'Content-Type': 'image/jpeg' })
+    stream.pipe(response)
   }
 }
