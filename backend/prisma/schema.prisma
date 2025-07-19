@@ -27,7 +27,7 @@ model Gallery {
   id                String   @id @default(uuid())
   name              String   @unique
   description       String
-  bucketDirectory   String?
+  bucketDirectory   String
   images            Image[]
   user              User     @relation(fields: [createdBy], references: [id])
   totalSize         Int

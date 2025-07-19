@@ -145,9 +145,6 @@ export const gallery = {
   },
   validateUserToken: async (token: string) => {
     try {
-      /**
-       * @todo I should log the user in here. If the token is valid
-       */
       return await api.get(`/v1/gallery/user/validate/${token}`)
     } catch (error) {
       throw error
@@ -178,6 +175,9 @@ export const gallery = {
       }
       throw new Error(String(error))
     }
+  },
+  fetchImages: async (userUuid: string) => {
+    return await api.get(`/v1/gallery/user/fetch-images/${userUuid}`)
   },
 }
 

@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import * as sharp from 'sharp'
 import * as path from 'path'
-import { promises as fs } from 'fs'
+import { createReadStream, promises as fs, readdirSync } from 'fs'
 import { sanitizeFilename } from '@/utils/helper'
+import { Image } from '@prisma/client'
 
 @Injectable()
 export class ImageService {
@@ -20,6 +21,14 @@ export class ImageService {
       'uploads',
       ...subdirectory.split('/')
     )
+  }
+
+  /**
+   *
+   * @todo what is the return type to this
+   */
+  async getImageStream(image: Image) {
+    return await createReadStream(this.uploadsDirectory + '/' + image.imageName)
   }
 
   async ensureUploadsDirectoryExists() {

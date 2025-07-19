@@ -23,7 +23,7 @@
           v-for="column in table
             .getAllColumns()
             .filter(
-              (col) => col.getCanFilter() && col.columnDef.header !== 'Delete'
+              (col: any) => col.getCanFilter() && col.columnDef.header !== 'Delete'
             )"
           :key="column.id"
           @click="column.toggleSorting()"
