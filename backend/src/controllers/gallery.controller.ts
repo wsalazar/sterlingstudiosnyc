@@ -500,12 +500,15 @@ export class GalleryController {
     const gallery = await this.galleryRepository.getGalleryById(
       accessToken.galleryId
     )
-    const images = gallery.images.map((images) => images.id)
+    const images = gallery.images.map((image) => ({
+      uuid: image.id,
+      price: image.price,
+    }))
 
     return response.status(200).json({
       data: {
         galleryId: accessToken.galleryId,
-        imageIds: images,
+        images: images,
         imageCount: images.length,
         bucketDirectory: gallery.bucketDirectory,
       },
