@@ -91,7 +91,6 @@ export class ImageService {
       }
       const oldPath = `${this.uploadsDirectory}/${serverData.image.imageName}`
       const newPath = `${this.uploadsDirectory}/${serverData?.newName}`
-      console.log('rename', oldPath, newPath)
       await fs.rename(oldPath, newPath)
     } catch (error) {
       throw new Error('There was an error rename file: ' + error)

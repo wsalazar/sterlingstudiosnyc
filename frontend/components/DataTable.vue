@@ -96,7 +96,7 @@
               <span v-else>
                 <span v-if="cell.column.id === 'clients'"
                   ><Dropdown
-                    v-model="row.original.userUuid"
+                    v-model="row.original.client"
                     :options="row.original.clients"
                     class="w-full"
                     optionLabel="name"
@@ -256,7 +256,6 @@ const selectClient = (row: any, event: any) => {
   const selected = row.original.clients.find(
     (client: any) => client.code === event.value
   )
-  console.log(row, selected?.name)
   emit('selected-client', row, selected)
 }
 
