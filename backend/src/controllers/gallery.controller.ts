@@ -79,7 +79,6 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
-      console.log('tests')
       let size = 0
       files.forEach((file) => (file.size += size))
       let subdirectory = galleryData?.subdirectory ?? ''
@@ -141,7 +140,6 @@ export class GalleryController {
         clients: users,
       }))
 
-      console.log(galleries, users, galleriesWithClients)
       return res
         .status(200)
         .json({ message: 'Success', data: galleriesWithClients })
@@ -158,7 +156,6 @@ export class GalleryController {
   ): Promise<Response> {
     try {
       const gallery = await this.galleryRepository.getGallery(id)
-      console.log(gallery)
       return res.status(200).json({ message: 'Success', data: gallery })
     } catch (error) {
       return res.status(error.status).json({ message: error.message })
@@ -232,10 +229,8 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
-      console.log(image)
       let size = 0
       image.forEach((file) => (file.size += size))
-      console.log(size)
       const { newPrice, newFile, existingImages, removedImages } = gallery
       const imageData =
         existingImages?.map((images) => JSON.parse(images)) || []
@@ -352,7 +347,6 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
-      console.log('user gallery data', userGalleryData)
       const user = await this.userRepository.getUserById(
         userGalleryData.clientId
       )

@@ -156,10 +156,6 @@ export const gallery = {
       const response = await api.get(
         `/v1/gallery/user/send-new-link/${token}/${overwrite}`
       )
-      console.log(response)
-      /**
-       * @todo have to rework this. I should not log the user in. i don't thin I should. Will have to think more on this.
-       */
       if (response.data.data.success) {
         return {
           success: true,

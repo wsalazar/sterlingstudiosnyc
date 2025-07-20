@@ -33,7 +33,6 @@ export class EmailService {
           pass: this.configService.get<string>('email.pass'),
         },
       })
-      console.log(this.transporter.options)
     }
   }
 

@@ -297,7 +297,6 @@ import { useToast } from 'vue-toastification'
 import Spinner from '@/components/Spinner.vue'
 import { getGalleryStore } from '../stores/gallery'
 const galleryData = computed(() => getGalleryStore().getGallery)
-console.log(galleryData, galleryData.value)
 
 const toast = useToast()
 
@@ -446,7 +445,8 @@ interface TableData {
   user: { name: string }
   updatedAt: string
   totalSize: number
-  clients: [{ id: string; name: string }]
+  clients: { id: string; name: string }[]
+  accessTokens: { user: { id: string } }
   images: { imageName: string; price: number; id: string }[]
   bucketDirectory: string // change this to bucektSubdirectory
   userUuid: string
@@ -464,11 +464,11 @@ const transformedData = computed(() => {
       price: image.price,
       id: image.id,
     })),
+    client: item.accessTokens?.user?.id,
     clients: item.clients.map((client) => ({
       name: client.name,
       code: client.id,
     })),
-    client: item.userUuid,
     updatedAt: item.updatedAt
       ? new Date(item.updatedAt).toLocaleDateString('en-US', {
           year: 'numeric',

@@ -78,7 +78,6 @@ onMounted(async () => {
         price: image.price,
       })
     )
-    console.log(imagesData.value)
   }
 })
 
