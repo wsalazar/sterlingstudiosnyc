@@ -132,10 +132,8 @@ export class AuthController {
       if (!isPasswordValid) {
         throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED)
       }
-      console.log('user', user)
 
       const payload = { email: user.email, sub: user.id }
-      console.log(payload)
       const token = this.jwtService.sign(payload)
 
       response.cookie('sterling_session', token, {
@@ -173,7 +171,6 @@ export class AuthController {
     admin: boolean
     success: boolean
   }> {
-    console.log(req.user.id)
     if (!req.user) throw new UnauthorizedException()
     const user = await this.prisma.user.findUnique({
       where: { id: req.user.id },

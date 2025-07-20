@@ -300,21 +300,20 @@ const handleRegister = async () => {
       password: registerForm.value.password,
       admin: registerForm.value.admin,
     }
-    console.log(userData)
     const response = await userApi.createUser(userData)
-    // console.log('User created successfully:', response)
+    console.log('User created successfully:', response)
 
-    // // Clear the form
-    // registerForm.value = {
-    //   name: '',
-    //   email: '',
-    //   password: '',
-    //   confirmPassword: '',
-    //   admin: false,
-    // }
+    // Clear the form
+    registerForm.value = {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      admin: false,
+    }
 
-    // // Switch to login tab
-    // activeTab.value = 'login'
+    // Switch to login tab
+    activeTab.value = 'login'
   } catch (error) {
     console.error('Registration failed:', error)
     errorMessage.value =

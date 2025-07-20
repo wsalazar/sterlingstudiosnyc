@@ -189,12 +189,28 @@ export class GalleryRepository {
 
   async getAllGalleries(): Promise<Gallery[] | []> {
     try {
-      return await this.prisma.gallery.findMany({
+      const galleries = await this.prisma.gallery.findMany({
         include: {
           images: true,
           user: true,
+          accessTokens: {
+            where: {
+              isActive: true,
+            },
+            select: {
+              user: {
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
         },
       })
+      return galleries.map((gallery) => ({
+        ...gallery,
+        accessTokens: gallery.accessTokens[0] || null,
+      }))
     } catch (error) {
       throw new Error(
         'There was an error while trying to fetch all galleries: ' + error
