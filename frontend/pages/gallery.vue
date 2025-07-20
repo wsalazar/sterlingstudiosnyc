@@ -4,7 +4,7 @@
       <a @click="openModal" class="cursor-pointer">
         <font-awesome-icon
           :icon="['fas', 'plus']"
-          class="w-5 h-5 text-gray-400"
+          class="w-5 h-5 text-[#f59e0b]"
         />
       </a>
       <!-- <NuxtLifecycleDemo /> -->

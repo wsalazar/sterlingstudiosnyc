@@ -193,7 +193,7 @@ export class GalleryRepository {
         include: {
           images: true,
           user: true,
-          accessTokens: {
+          accessToken: {
             where: {
               isActive: true,
             },
@@ -209,7 +209,7 @@ export class GalleryRepository {
       })
       return galleries.map((gallery) => ({
         ...gallery,
-        accessTokens: gallery.accessTokens[0] || null,
+        accessTokens: gallery.accessToken[0] || null,
       }))
     } catch (error) {
       throw new Error(
