@@ -8,6 +8,10 @@ import { DropboxService } from '../services/dropbox.service'
 import { ImageService } from '@/services/image.service'
 import { S3Service } from '@/services/s3.service'
 import { CloudProviderService } from '@/services/cloudprovider.service'
+import { UserRepository } from '@/repositories/user.repository'
+import { EmailService } from '@/services/email.service'
+import { AccessTokenRepository } from '@/repositories/accessToken.repository'
+import { JwtService } from '@nestjs/jwt'
 
 @Module({
   imports: [ConfigModule],
@@ -34,7 +38,17 @@ import { CloudProviderService } from '@/services/cloudprovider.service'
     PrismaService,
     PrismaClient,
     ImageService,
+    UserRepository,
+    EmailService,
+    AccessTokenRepository,
+    JwtService,
   ],
-  exports: [GalleryRepository, PrismaClient],
+  exports: [
+    GalleryRepository,
+    PrismaClient,
+    UserRepository,
+    AccessTokenRepository,
+    JwtService,
+  ],
 })
 export class GalleryModule {}

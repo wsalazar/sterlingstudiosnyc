@@ -257,6 +257,7 @@ const registerForm = ref({
   email: '',
   password: '',
   confirmPassword: '',
+  admin: false,
 })
 
 const handleLogin = async () => {
@@ -297,8 +298,8 @@ const handleRegister = async () => {
       name: registerForm.value.name,
       email: registerForm.value.email,
       password: registerForm.value.password,
+      admin: registerForm.value.admin,
     }
-    console.log(userData)
     const response = await userApi.createUser(userData)
     console.log('User created successfully:', response)
 
@@ -308,6 +309,7 @@ const handleRegister = async () => {
       email: '',
       password: '',
       confirmPassword: '',
+      admin: false,
     }
 
     // Switch to login tab

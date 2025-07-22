@@ -58,7 +58,7 @@ export function useAuth() {
 
       try {
         const userData = await auth.validate()
-
+        console.log(userData)
         if (userData && userData.email) {
           isAuthenticated.value = true
           isAdmin.value = userData.admin

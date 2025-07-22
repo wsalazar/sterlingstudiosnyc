@@ -17,11 +17,27 @@ export abstract class CloudProviderService {
 
   abstract uploadFile(
     file: Express.Multer.File,
+    fileName: string,
     subdirectory: string
   ): Promise<string>
 
   abstract deleteSubdirectory(bucketDirectory: string)
 
   abstract getDirectorySize(bucketDirectory: string)
-  abstract removeImageObjectFromS3(bucketDirectory: string, images: string[])
+  abstract removeImageObjectFromS3(
+    bucketDirectory: string,
+    files?: { imageName: string }[]
+  )
+
+  abstract copyImageObject(imageData: {
+    image: { imageName: string }
+    bucketSubdirectory: string
+    newName?: string
+    tempFile?: boolean
+  })
+
+  abstract deleteImageObject(imageData: {
+    image: { imageName: string }
+    bucketSubdirectory: string
+  })
 }

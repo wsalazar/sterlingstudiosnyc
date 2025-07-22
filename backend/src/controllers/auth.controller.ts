@@ -15,19 +15,27 @@ import * as bcrypt from 'bcrypt'
 import { Public } from '../decorators/public.decorator'
 import { ConfigService } from '@nestjs/config'
 import { Response } from 'express'
+import { EmailService } from '@/services/email.service'
 
 @Controller('v1/auth')
 export class AuthController {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private emailService: EmailService
   ) {}
 
   @Public()
   @Post('user')
-  async createAdminUser(
-    @Body() userData: { email: string; password: string; name: string }
+  async createUser(
+    @Body()
+    userData: {
+      email: string
+      password: string
+      name: string
+      admin: boolean
+    }
   ) {
     try {
       // Check if user already exists
@@ -52,7 +60,7 @@ export class AuthController {
           email: userData.email,
           password: hashedPassword,
           name: userData.name,
-          admin: false,
+          admin: userData.admin,
         },
         select: {
           id: true,
@@ -62,6 +70,31 @@ export class AuthController {
           createdAt: true,
           updatedAt: true,
         },
+      })
+      await this.emailService.sendEmail({
+        from: this.configService.get<string>('email.user'),
+        to: userData.email,
+        subject: 'Welcome to Sterling Studios NYC',
+        html: `<img
+                src="/assets/images/Logo_Final2022.jpg"
+                alt="Sterling Studios NYC Logo"
+                width="100px"
+                height="100px"
+              /><h1>Welcome ${userData.name}</h1><br />The admin has been sent an email.`,
+        text: `Welcome ${userData.name}\nThe admin has been sent an email.`,
+      })
+
+      await this.emailService.sendEmail({
+        from: this.configService.get<string>('email.user'),
+        to: this.configService.get<string>('email.user'),
+        subject: 'No Reply',
+        html: `<img
+                src="/assets/images/Logo_Final2022.jpg"
+                alt="Sterling Studios NYC Logo"
+                width="100px"
+                height="100px"
+              />${userData.name} has just joined. Please login to your account and assign his gallery.`,
+        text: `${userData.name} has just joined. Please login to your account and assign his gallery.`,
       })
 
       return newUser
@@ -81,7 +114,7 @@ export class AuthController {
   async login(
     @Body() loginData: { email: string; password: string },
     @Res({ passthrough: true }) response: Response
-  ): Promise<{ user: object; success: boolean }> {
+  ): Promise<Response> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email: loginData.email },
@@ -109,15 +142,20 @@ export class AuthController {
         sameSite: 'lax',
         maxAge: 3600000,
       })
+      const { email, name, admin } = user
 
-      return {
+      const responseData = {
         user: {
-          email: user.email,
-          name: user.name,
-          admin: user.admin,
+          email,
+          name,
+          admin,
         },
         success: true,
       }
+
+      return response
+        .status(200)
+        .json({ message: 'Success', data: responseData })
     } catch (error) {
       if (error instanceof HttpException) {
         throw error
@@ -133,7 +171,6 @@ export class AuthController {
     admin: boolean
     success: boolean
   }> {
-    console.log(req.user.id)
     if (!req.user) throw new UnauthorizedException()
     const user = await this.prisma.user.findUnique({
       where: { id: req.user.id },

@@ -7,12 +7,10 @@ import {
   DeleteObjectCommand,
   ListObjectsCommand,
   DeleteObjectsCommand,
-  QuoteFields,
+  RenameObjectCommand,
+  CopyObjectCommand,
 } from '@aws-sdk/client-s3'
-import { sanitizeFilename } from '../utils/helper'
-import axios from 'axios'
 import { CloudProviderService } from './cloudprovider.service'
-import { ObjectUnsubscribedError } from 'rxjs'
 
 @Injectable()
 export class S3Service extends CloudProviderService {
@@ -31,57 +29,132 @@ export class S3Service extends CloudProviderService {
 
   async uploadFile(
     file: Express.Multer.File,
+    fileName: string,
     subdirectory: string
   ): Promise<string> {
     try {
-      const key = `${subdirectory}${file.originalname}`
-      const command = new PutObjectCommand({
+      const key = `${subdirectory}${fileName}`
+      const putParameters = {
         Bucket: this.s3Bucket,
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
-      })
-
+      }
+      const command = new PutObjectCommand(putParameters)
+      console.log(key, putParameters)
       await this.s3.send(command)
-
+      console.log(
+        `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
+      )
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
     } catch (error) {
       if (error.error) {
-        console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
+        throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to upload file to S3: ${error.message}`)
     }
   }
 
-  async getDirectorySize(bucketDirectory: string): Promise<number> {
-    // console.log(bucketDirectory)
-    let continuationToken: string | undefined = undefined
-    let totalSize = 0
-    do {
-      const command = new ListObjectsV2Command({
+  async copyImageObject(imageData: {
+    image: { imageName: string }
+    bucketSubdirectory: string
+    newName?: string
+    tempFile?: boolean
+  }): Promise<string> {
+    /**
+     * I was getting an error when trying to use RenameObjectCommand.
+     * Issue is that in my version of the AWS SDK I have a x-amz-rename-source header that is not supported
+     * // const renameParameters = {
+      //   Bucket: this.s3Bucket,
+      //   Key: keyDelete,
+      //   RenameSource: keyDelete,
+      //   NewKey: newKey,
+      // }
+      // const command = await new RenameObjectCommand(renameParameters)
+     */
+    try {
+      const keyCopy = `${this.s3Bucket}/${imageData.bucketSubdirectory}${imageData.image.imageName}`
+      const temporaryExtension = imageData.tempFile ? '.tmp' : ''
+      const newKey = `${imageData.bucketSubdirectory}${imageData.newName}${temporaryExtension}`
+      // const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
+
+      const copyParameter = {
         Bucket: this.s3Bucket,
-        Prefix: bucketDirectory,
-        ContinuationToken: continuationToken,
-      })
-      const response = await this.s3.send(command)
-      if (response.Contents) {
-        totalSize += response.Contents.reduce((sum, obj) => {
-          // console.log('obj', obj)
-          return sum + (obj.Size || 0)
-        }, 0)
+        Key: newKey,
+        CopySource: keyCopy,
       }
-      continuationToken = response.NextContinuationToken
-    } while (continuationToken)
-    // console.log('total size', totalSize)
-    return totalSize
+      console.log('copy', copyParameter)
+      const copyCommand = new CopyObjectCommand(copyParameter)
+      await this.s3.send(copyCommand)
+
+      // const deleteParameters = {
+      //   Bucket: this.s3Bucket,
+      //   Key: keyDelete,
+      // }
+      // console.log('delete', deleteParameters)
+      // const deleteCommand = new DeleteObjectCommand(deleteParameters)
+
+      // await this.s3.send(deleteCommand)
+      return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${newKey}`
+    } catch (error) {
+      console.log('This is the error', error)
+      throw new Error(error)
+    }
   }
 
-  async removeImageObjectFromS3(bucketDirectory: string, images: string[]) {
+  async deleteImageObject(imageData: {
+    image: { imageName: string }
+    bucketSubdirectory: string
+  }) {
     try {
-      const objectsToDelete = images.map((fileName) => ({
-        Key: `${bucketDirectory}${fileName}`,
+      const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
+      const deleteParameters = {
+        Bucket: this.s3Bucket,
+        Key: keyDelete,
+      }
+      console.log('delete', deleteParameters)
+      const deleteCommand = new DeleteObjectCommand(deleteParameters)
+
+      await this.s3.send(deleteCommand)
+    } catch (error) {
+      console.log('This is the error', error)
+      throw new Error(error)
+    }
+  }
+
+  async getDirectorySize(bucketDirectory: string): Promise<number> {
+    let continuationToken: string | undefined = undefined
+    let totalSize = 0
+    try {
+      do {
+        const command = new ListObjectsV2Command({
+          Bucket: this.s3Bucket,
+          Prefix: bucketDirectory,
+          ContinuationToken: continuationToken,
+        })
+        const response = await this.s3.send(command)
+        if (response.Contents) {
+          totalSize += response.Contents.reduce((sum, obj) => {
+            return sum + (obj.Size || 0)
+          }, 0)
+        }
+        continuationToken = response.NextContinuationToken
+      } while (continuationToken)
+      return totalSize
+    } catch (error) {
+      throw new Error('There is an unknown error that occurred:' + error)
+    }
+  }
+
+  async removeImageObjectFromS3(
+    bucketDirectory: string,
+    files?: { imageName: string }[]
+  ) {
+    try {
+      const objectsToDelete = files?.map((file) => ({
+        Key: `${bucketDirectory}${file.imageName}`,
       }))
-      console.log(objectsToDelete)
+      if (objectsToDelete.length === 0) return
       const deleteParams = {
         Bucket: this.s3Bucket,
         Delete: {
@@ -117,7 +190,7 @@ export class S3Service extends CloudProviderService {
       }
     } catch (error) {
       if (error.error) {
-        console.error('S3 API Error:', JSON.stringify(error.error, null, 2))
+        throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to delete file: ${error.message}`)
     }

@@ -6,8 +6,8 @@ export default defineNuxtRouteMiddleware((to) => {
     currentLayout: to.meta.layout,
     fullRoute: to,
   })
+  console.log(to)
 
-  // Only apply auth layouts to auth-related routes
   if (to.path === '/auth' || to.path === '/admin/auth') {
     to.meta.layout = isAdmin.value ? 'admin-auth' : 'auth'
   } else {

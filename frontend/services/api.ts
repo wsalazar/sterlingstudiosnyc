@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useUserStore } from '@/stores/user'
 
 const api = axios.create({
   baseURL: 'http://localhost:3001',
@@ -38,12 +39,22 @@ export const upload = {
     description: string
     images: File[]
     subdirectory: string
+    price: string[]
+    newFile: string[]
   }) => {
     try {
       const formData = new FormData()
       Object.entries(imageData).forEach(([index, value]) => {
         if (index !== 'images' && typeof value === 'string') {
           formData.append(index, value)
+        } else if (index !== 'images' && typeof value === 'object') {
+          const valueArray = Object.values(value)
+          let count: number = 0
+
+          valueArray.forEach((item) => {
+            formData.append(`${index}[${count}]`, item)
+            count += 1
+          })
         }
       })
       imageData.images.forEach((file) => {
@@ -53,7 +64,6 @@ export const upload = {
       const response = await api.post('v1/gallery', formData)
       return response.data
     } catch (error) {
-      console.log(error)
       if (axios.isAxiosError(error)) {
         throw new Error(
           error.response?.data?.message || 'Failed to upload images'
@@ -62,33 +72,44 @@ export const upload = {
       throw error
     }
   },
-  patchImage: async (
-    id: string,
-    galleryImages: string[],
-    selectedImages: File[]
-  ) => {
+  patchImage: async (patchData: {
+    id: string
+    imagesToEdit?: { imageName?: string; price?: string; id: string }[]
+    removedImages: { imageName: string; price: string; id: string }[]
+    images: File[]
+    price: string[]
+    newFile: string[]
+  }) => {
+    const { id, images, price, newFile, imagesToEdit, removedImages } =
+      patchData
     const formData = new FormData()
-    Object.entries(galleryImages).forEach(([index, value]) => {
-      formData.append('galleryImage', value)
-    })
-    Object.entries(selectedImages).forEach(([index, value]) => {
-      formData.append('selectedImage', value)
-    })
 
-    /**
-     * I don't think i'll be able to delete. Because I don't have the actual images. Just the names of the images.
-     * So I'll have to take a diff what I have stored locally and what has been removed. Then cache in a var what
-     *  has been removed and remove it locally and in the s3 bucket.
-     * After add any new images that have been added.
-     */
+    for (let index = 0; index < images.length; index++) {
+      /**
+       * For new images
+       */
+      formData.append(`image`, images[index])
+      formData.append(`newPrice[]`, price[index])
+      formData.append(`newFile[]`, newFile[index])
+    }
 
+    if (imagesToEdit) {
+      for (let index = 0; index < imagesToEdit.length; index++) {
+        formData.append('existingImages[]', JSON.stringify(imagesToEdit[index]))
+      }
+    }
+    if (removedImages) {
+      for (let index = 0; index < removedImages.length; index++) {
+        formData.append('removedImages[]', removedImages[index].id)
+      }
+    }
     await api.patch(`v1/gallery/${id}`, formData)
   },
 }
 export const gallery = {
   get: async () => {
     try {
-      return await api.get('v1/gallery')
+      return (await api.get('v1/gallery')).data
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || error)
@@ -109,6 +130,51 @@ export const gallery = {
   patch: async (id: string, data: { newValue: string; fieldName: string }) => {
     await api.patch(`v1/gallery/update-fields/${id}`, data)
   },
+  assignUser: async (galleryUserData: {
+    clientId: string
+    galleryId: string
+  }) => {
+    try {
+      return await api.post('/v1/gallery/user', galleryUserData)
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || error)
+      }
+      throw error
+    }
+  },
+  validateUserToken: async (token: string) => {
+    try {
+      return await api.get(`/v1/gallery/user/validate/${token}`)
+    } catch (error) {
+      throw error
+    }
+  },
+  sendNewLink: async (token: string) => {
+    try {
+      const overwrite = true
+      const response = await api.get(
+        `/v1/gallery/user/send-new-link/${token}/${overwrite}`
+      )
+      if (response.data.data.success) {
+        return {
+          success: true,
+          message: response.data.message,
+        }
+      }
+      return { success: false }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          error.response?.data?.message || error.message || String(error)
+        )
+      }
+      throw new Error(String(error))
+    }
+  },
+  fetchImages: async (userUuid: string) => {
+    return await api.get(`/v1/gallery/user/fetch-images/${userUuid}`)
+  },
 }
 
 export const authApi = {
@@ -119,7 +185,6 @@ export const authApi = {
           'Content-Type': 'application/json',
         },
       })
-      console.log('login', response.data)
       return response.data
     } catch (error) {
       if (axios.isAxiosError(error)) {

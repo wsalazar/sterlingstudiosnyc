@@ -1,6 +1,13 @@
-import { Dropbox } from 'dropbox'
-
 export default () => ({
+  domain: {
+    url: process.env.API_BASE_URL,
+  },
+  email: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+  },
   supabase: {
     url: process.env.SUPABASE_URL,
     anonKey: process.env.SUPABASE_ANON_KEY,
