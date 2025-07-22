@@ -75,6 +75,8 @@ export class GalleryController {
       subdirectory: string
       newFile: string[]
       price: number[]
+      clientEvent?: string
+      clientEvents?: string[]
     },
     @Res() res: Response
   ): Promise<Response> {

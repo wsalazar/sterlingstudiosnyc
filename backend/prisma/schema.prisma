@@ -27,15 +27,21 @@ model Gallery {
   id                String   @id @default(uuid())
   name              String   @unique
   description       String?
-  bucketDirectory   String?
   images            Image[]
   user              User     @relation(fields: [createdBy], references: [id])
   totalSize         Int
-  userUuid          String @default("")
   createdBy         String
-  accessToken      AccessToken[]
+  accessToken       AccessToken[]
+  galleryBuckets    GalleryBucket[]
   createAt          DateTime @default(now())
   updatedAt         DateTime @default(now())
+}
+
+model GalleryBucket {
+  id                String   @id @default(uuid())
+  galleries         Gallery[]
+  galleryId         String
+  bucketDirectory   String
 }
 
 model Image {

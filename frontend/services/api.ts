@@ -41,6 +41,8 @@ export const upload = {
     subdirectory: string[]
     price: string[]
     newFile: string[]
+    clientEvent?: string
+    clientEvents?: string[]
   }) => {
     try {
       const formData = new FormData()
