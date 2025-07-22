@@ -187,6 +187,10 @@ export class GalleryRepository {
     }
   }
 
+  /**
+   * @todo user token has a certain expiration to it but should it still be active?
+   * @todo if it's not active how should it be selected form this query down here
+   */
   async getAllGalleries(): Promise<Gallery[] | []> {
     try {
       const galleries = await this.prisma.gallery.findMany({

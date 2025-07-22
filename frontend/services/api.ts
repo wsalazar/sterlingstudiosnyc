@@ -38,7 +38,7 @@ export const upload = {
     name: string
     description: string
     images: File[]
-    subdirectory: string
+    subdirectory: string[]
     price: string[]
     newFile: string[]
   }) => {

@@ -67,7 +67,7 @@
     class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
     <div
-      class="relative top-20 p-5 mx-auto w-[50rem] bg-white rounded-md border shadow-lg"
+      class="relative top-20 p-5 mx-auto w-[80rem] bg-white rounded-md border shadow-lg"
     >
       <div class="mt-3">
         <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
@@ -87,7 +87,7 @@
               placeholder="Enter name"
             />
           </div>
-          <div v-if="editMode === false">
+          <!-- <div v-if="editMode === false">
             <label for="name" class="block text-sm font-medium text-gray-700"
               >Subdirectory</label
             >
@@ -98,7 +98,7 @@
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter a subdirectory ie: TestDirectory/Subdirectory"
             />
-          </div>
+          </div> -->
 
           <div v-if="editMode === false">
             <label
@@ -109,7 +109,6 @@
             <textarea
               id="description"
               v-model="formData.description"
-              required
               rows="3"
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter description"
@@ -203,6 +202,16 @@
                   :key="index"
                   class="flex justify-between items-center text-sm text-gray-600"
                 >
+                  <div>
+                    <input
+                      class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      type="text"
+                      v-model="formData.subdirectory[index]"
+                      @keydown.enter.prevent="onEnterPrice(index)"
+                      @keyup.esc="cancelImage"
+                      placeholder="Enter directory path"
+                    />
+                  </div>
                   <span class="truncate">{{ `${file.name}` }}</span>
 
                   <div>
@@ -485,7 +494,7 @@ interface FormData {
   name: string
   description: string
   images: File[]
-  subdirectory: string
+  subdirectory: string[]
   newFile: string[]
   price: string[]
 }
@@ -494,7 +503,7 @@ const formData = ref<FormData>({
   name: '',
   description: '',
   images: [] as File[],
-  subdirectory: '',
+  subdirectory: [] as string[],
   newFile: [] as string[],
   price: [] as string[],
 })
@@ -504,7 +513,7 @@ const closeModal = () => {
   formData.value.name = ''
   formData.value.description = ''
   formData.value.images = []
-  formData.value.subdirectory = ''
+  formData.value.subdirectory = []
   formData.value.newFile = []
   formData.value.price = []
 }
@@ -581,7 +590,7 @@ const handleSubmit = async () => {
       name: '',
       description: '',
       images: [],
-      subdirectory: '',
+      subdirectory: [],
       newFile: [],
       price: [],
     }
