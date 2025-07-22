@@ -87,18 +87,49 @@
               placeholder="Enter name"
             />
           </div>
-          <!-- <div v-if="editMode === false">
-            <label for="name" class="block text-sm font-medium text-gray-700"
-              >Subdirectory</label
+          <div v-if="editMode === false">
+            <label
+              for="subdirectory"
+              class="block text-sm font-medium text-gray-700"
+              >Client Name</label
             >
             <input
               type="text"
               id="subdirectory"
               v-model="formData.subdirectory"
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              placeholder="Enter a subdirectory ie: TestDirectory/Subdirectory"
+              placeholder="Enter Client's name"
             />
-          </div> -->
+          </div>
+          <div v-if="editMode === false" class="flex">
+            <input
+              type="checkbox"
+              id="event"
+              v-model="formData.event"
+              @change="!formData.event"
+              class="block mt-1 mr-2 w-5 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+            <label
+              for="event"
+              class="inline-block text-sm font-medium text-gray-700"
+              >Same Event</label
+            >
+          </div>
+
+          <div v-if="editMode === false && formData.event">
+            <label
+              for="clientEvent"
+              class="block text-sm font-medium text-gray-700"
+              >Event</label
+            >
+            <input
+              type="text"
+              id="clientEvent"
+              v-model="formData.clientEvent"
+              class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter the Client's Event"
+            />
+          </div>
 
           <div v-if="editMode === false">
             <label
@@ -202,14 +233,14 @@
                   :key="index"
                   class="flex justify-between items-center text-sm text-gray-600"
                 >
-                  <div>
+                  <div v-if="!formData.event">
                     <input
                       class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       type="text"
-                      v-model="formData.subdirectory[index]"
+                      v-model="formData.clientEvents[index]"
                       @keydown.enter.prevent="onEnterPrice(index)"
                       @keyup.esc="cancelImage"
-                      placeholder="Enter directory path"
+                      placeholder="Enter the Client's Event"
                     />
                   </div>
                   <span class="truncate">{{ `${file.name}` }}</span>
@@ -497,6 +528,9 @@ interface FormData {
   subdirectory: string[]
   newFile: string[]
   price: string[]
+  event: boolean
+  clientEvent: string
+  clientEvents: string[]
 }
 
 const formData = ref<FormData>({
@@ -506,6 +540,9 @@ const formData = ref<FormData>({
   subdirectory: [] as string[],
   newFile: [] as string[],
   price: [] as string[],
+  event: true,
+  clientEvent: '',
+  clientEvents: [] as string[],
 })
 
 const closeModal = () => {
@@ -516,6 +553,9 @@ const closeModal = () => {
   formData.value.subdirectory = []
   formData.value.newFile = []
   formData.value.price = []
+  formData.value.event = true
+  formData.value.clientEvent = ''
+  formData.value.clientEvents = []
 }
 const handleImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -593,6 +633,9 @@ const handleSubmit = async () => {
       subdirectory: [],
       newFile: [],
       price: [],
+      event: true,
+      clientEvent: '',
+      clientEvents: [],
     }
     removedImages.value = []
     renderForm.value = false
