@@ -39,7 +39,7 @@ model Gallery {
 
 model GalleryBucket {
   id                String   @id @default(uuid())
-  galleries         Gallery[]
+  galleries         Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   galleryId         String
   bucketDirectory   String
 }
