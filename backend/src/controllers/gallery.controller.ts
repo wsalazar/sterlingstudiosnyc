@@ -72,61 +72,62 @@ export class GalleryController {
       name: string
       description: string
       file: GalleryImage[]
-      subdirectory: string
+      clientDirectoryName: string
       newFile: string[]
       price: number[]
-      clientEvent?: string
       clientEvents?: string[]
     },
     @Res() res: Response
   ): Promise<Response> {
     try {
-      let size = 0
-      files.forEach((file) => (file.size += size))
-      let subdirectory = galleryData?.subdirectory.trim() ?? ''
-      const clientEvents = galleryData?.clientEvent ?? galleryData?.clientEvents
-      console.log(clientEvents)
+      let subdirectory = galleryData.clientDirectoryName.trim()
+      const clientEvents = galleryData?.clientEvents
+      let imagesData = []
       if (subdirectory) {
-        // if (!subdirectory.endsWith('/')) {
-        //   subdirectory = `${galleryData.subdirectory.trim()}/`
-        //   try {
-        //     await this.imageService.setSubdirectory(subdirectory)
-        //   } catch (error) {
-        //     const status = error.status || 500
-        //     return res.status(status).json({ message: error.message })
-        //   }
-        // }
+        subdirectory = `${subdirectory.trim()}/`
+        try {
+          const renameFiles = galleryData.newFile
+          const prices = galleryData.price
+
+          imagesData = await Promise.all(
+            files.map(async (file, index) => {
+              let fileName = renameFiles[index] || file.originalname
+              fileName = sanitizeFilename(fileName)
+              const image = await this.imageService.createLowResolutionImage(
+                file.buffer
+              )
+              const prefixDirectory =
+                clientEvents.length > 1
+                  ? subdirectory + clientEvents[index] + '/'
+                  : subdirectory + clientEvents[0] + '/'
+              await this.imageService.saveFile(image, fileName, prefixDirectory)
+              const url = await this.cloudProvider.uploadFile(
+                file,
+                fileName,
+                prefixDirectory
+              )
+              return { url, imageName: fileName, price: prices[index] }
+            })
+          )
+        } catch (error) {
+          const status = error.status || 500
+          return res.status(status).json({ message: error.message })
+        }
       }
-      // const renameFiles = galleryData.newFile
-      // const prices = galleryData.price
-      // const imagesData = await Promise.all(
-      //   files.map(async (file, index) => {
-      //     let fileName = renameFiles[index] || file.originalname
-      //     fileName = sanitizeFilename(fileName)
-      //     const image = await this.imageService.createLowResolutionImage(
-      //       file.buffer
-      //     )
-      //     this.imageService.saveFile(image, fileName)
-      //     const url = await this.cloudProvider.uploadFile(
-      //       file,
-      //       fileName,
-      //       subdirectory
-      //     )
-      //     return { url, imageName: fileName, price: prices[index] }
-      //   })
-      // )
-      // const totalSize = await this.cloudProvider.getDirectorySize(subdirectory)
-      // const gallery = await this.galleryRepository.createGallery({
-      //   name: galleryData.name,
-      //   description: galleryData.description,
-      //   images: imagesData,
-      //   createdBy: user.id,
-      //   bucketDirectory: subdirectory,
-      //   totalSize: totalSize,
-      // })
+
+      const totalSize = await this.cloudProvider.getDirectorySize(subdirectory)
+      const gallery = await this.galleryRepository.createGallery({
+        name: galleryData.name,
+        description: galleryData.description,
+        images: imagesData,
+        createdBy: user.id,
+        bucketDirectory: subdirectory,
+        totalSize: totalSize,
+        clientEvents: galleryData.clientEvents,
+      })
       return res
         .status(201)
-        .json({ message: 'Successfully created a gallery.', data: 'gallery' })
+        .json({ message: 'Successfully created a gallery.', data: gallery })
     } catch (error) {
       const status = error.status || 500
       return res.status(status).json({ message: error.message })
@@ -166,24 +167,32 @@ export class GalleryController {
   //   }
   // }
 
-  // @Public()
-  // @Delete('/:id')
-  // async deleteGallery(
-  //   @Param('id') id: string,
-  //   @Res() res: Response
-  // ): Promise<Response> {
-  //   try {
-  //     const gallery = await this.galleryRepository.getGallery(id)
-  //     const bucketDirectory = gallery.bucketDirectory
-  //     this.imageService.setSubdirectory(bucketDirectory)
-  //     await this.imageService.deleteDirectory()
-  //     await this.cloudProvider.deleteSubdirectory(bucketDirectory)
-  //     await this.galleryRepository.deleteGallery(id)
-  //     return res.status(200).json({ message: 'Gallery deleted successfully' })
-  //   } catch (error) {
-  //     return res.status(error.status).json({ message: error.message })
-  //   }
-  // }
+  @Delete('/:id')
+  async deleteGallery(
+    @Param('id') id: string,
+    @Res() res: Response
+  ): Promise<Response> {
+    try {
+      const gallery = await this.galleryRepository.getGallery(id)
+      const galleryBucket = gallery.galleryBuckets
+        .map((gall) => {
+          const slash = gall.bucketDirectory.indexOf('/')
+          const prefix = gall.bucketDirectory.substring(0, slash)
+          return prefix
+        })
+        .filter((value, index, self) => {
+          return self.indexOf(value) === index
+        })
+        .pop()
+      this.imageService.setSubdirectory(galleryBucket)
+      await this.imageService.deleteDirectory()
+      await this.cloudProvider.deleteSubdirectory(galleryBucket)
+      await this.galleryRepository.deleteGallery(id)
+      return res.status(200).json({ message: 'Gallery deleted successfully' })
+    } catch (error) {
+      return res.status(error.status).json({ message: error.message })
+    }
+  }
 
   // /**
   //  * @todo make sure to update the date

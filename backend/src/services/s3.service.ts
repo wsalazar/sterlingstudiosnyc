@@ -34,6 +34,7 @@ export class S3Service extends CloudProviderService {
   ): Promise<string> {
     try {
       const key = `${subdirectory}${fileName}`
+      console.log('key', key)
       const putParameters = {
         Bucket: this.s3Bucket,
         Key: key,
@@ -41,7 +42,7 @@ export class S3Service extends CloudProviderService {
         ContentType: file.mimetype,
       }
       const command = new PutObjectCommand(putParameters)
-      console.log(key, putParameters)
+      console.log('key parameteres', key, putParameters)
       await this.s3.send(command)
       console.log(
         `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`

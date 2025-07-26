@@ -18,7 +18,7 @@
       />
     </div>
   </div>
-  <Spinner v-if="isLoading" />
+  <!-- <Spinner v-if="isLoading" /> -->
 
   <div v-if="!userIsAdmin" class="p-4 mt-4">
     <UserGallery :galleryData="galleryData" />
@@ -89,14 +89,15 @@
           </div>
           <div v-if="editMode === false">
             <label
-              for="subdirectory"
+              for="clientDirectoryName"
               class="block text-sm font-medium text-gray-700"
               >Client Name</label
             >
             <input
               type="text"
-              id="subdirectory"
-              v-model="formData.subdirectory"
+              id="clientDirectoryName"
+              required
+              v-model="formData.clientDirectoryName"
               class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter Client's name"
             />
@@ -238,8 +239,6 @@
                       class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       type="text"
                       v-model="formData.clientEvents[index]"
-                      @keydown.enter.prevent="onEnterPrice(index)"
-                      @keyup.esc="cancelImage"
                       placeholder="Enter the Client's Event"
                     />
                   </div>
@@ -413,6 +412,7 @@ const fetchGalleryData = async () => {
   try {
     const galleries = await gallery.get()
     data.value = galleries.data
+    console.log(galleries.data)
   } catch (error) {
     console.error('Error fetching gallery:', error)
   }
@@ -525,7 +525,7 @@ interface FormData {
   name: string
   description: string
   images: File[]
-  subdirectory: string[]
+  clientDirectoryName: string
   newFile: string[]
   price: string[]
   event: boolean
@@ -537,7 +537,7 @@ const formData = ref<FormData>({
   name: '',
   description: '',
   images: [] as File[],
-  subdirectory: [] as string[],
+  clientDirectoryName: '',
   newFile: [] as string[],
   price: [] as string[],
   event: true,
@@ -550,7 +550,7 @@ const closeModal = () => {
   formData.value.name = ''
   formData.value.description = ''
   formData.value.images = []
-  formData.value.subdirectory = []
+  formData.value.clientDirectoryName = ''
   formData.value.newFile = []
   formData.value.price = []
   formData.value.event = true
@@ -630,7 +630,7 @@ const handleSubmit = async () => {
       name: '',
       description: '',
       images: [],
-      subdirectory: [],
+      clientDirectoryName: '',
       newFile: [],
       price: [],
       event: true,

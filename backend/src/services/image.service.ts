@@ -41,7 +41,7 @@ export class ImageService {
     }
   }
 
-  async setSubdirectory(subdirectory) {
+  async setSubdirectory(subdirectory: string) {
     this.subdirectory = subdirectory
     await this.setUploadsDirectory(subdirectory)
     try {
@@ -70,8 +70,10 @@ export class ImageService {
     }
   }
 
-  async saveFile(image: Buffer, fileName: string) {
+  async saveFile(image: Buffer, fileName: string, subdirectory: string) {
     try {
+      await this.setSubdirectory(subdirectory)
+      console.log('path', `${this.uploadsDirectory}/${fileName}`)
       await fs.writeFile(`${this.uploadsDirectory}/${fileName}`, image)
     } catch (error) {
       throw new Error(

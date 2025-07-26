@@ -38,14 +38,28 @@ export const upload = {
     name: string
     description: string
     images: File[]
-    subdirectory: string[]
+    clientDirectoryName: string
     price: string[]
     newFile: string[]
+    clientEvents: string[]
     clientEvent?: string
-    clientEvents?: string[]
   }) => {
     try {
+      /**
+       * @todo we have an issue here where clientEvents is empty and there is no clientEvent
+       */
+      console.log('bdfore', imageData)
+
+      let clientEvents =
+        imageData.clientEvents.length > 0
+          ? imageData.clientEvents
+          : imageData.clientEvent
+          ? [imageData.clientEvent]
+          : []
+      imageData.clientEvents = clientEvents
+      delete imageData.clientEvent
       const formData = new FormData()
+      console.log(imageData)
       Object.entries(imageData).forEach(([index, value]) => {
         if (index !== 'images' && typeof value === 'string') {
           formData.append(index, value)
@@ -62,7 +76,7 @@ export const upload = {
       imageData.images.forEach((file) => {
         formData.append('file', file)
       })
-
+      console.log(imageData)
       const response = await api.post('v1/gallery', formData)
       return response.data
     } catch (error) {

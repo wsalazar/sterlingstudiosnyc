@@ -12,6 +12,7 @@ export class GalleryRepository {
     createdBy: string
     bucketDirectory: string
     totalSize: number
+    clientEvents: string[]
   }): Promise<Gallery> {
     console.log('images', galleryData.images)
     return await this.prisma.gallery.create({
@@ -27,11 +28,16 @@ export class GalleryRepository {
             }
           : undefined,
         createdBy: galleryData.createdBy,
-        // bucketDirectory: galleryData.bucketDirectory,
         totalSize: galleryData.totalSize,
+        galleryBuckets: {
+          create: galleryData.clientEvents.map((event) => ({
+            bucketDirectory: galleryData.bucketDirectory + event + '/',
+          })),
+        },
       },
       include: {
         images: true,
+        galleryBuckets: true,
       },
     })
   }
@@ -97,6 +103,7 @@ export class GalleryRepository {
         where: { id },
         include: {
           images: true,
+          galleryBuckets: true,
         },
       })
     } catch (error) {
@@ -196,6 +203,7 @@ export class GalleryRepository {
       const galleries = await this.prisma.gallery.findMany({
         include: {
           images: true,
+          galleryBuckets: true,
           user: true,
           accessToken: {
             where: {
