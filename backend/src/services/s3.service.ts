@@ -34,7 +34,6 @@ export class S3Service extends CloudProviderService {
   ): Promise<string> {
     try {
       const key = `${subdirectory}${fileName}`
-      console.log('key', key)
       const putParameters = {
         Bucket: this.s3Bucket,
         Key: key,
@@ -42,11 +41,7 @@ export class S3Service extends CloudProviderService {
         ContentType: file.mimetype,
       }
       const command = new PutObjectCommand(putParameters)
-      console.log('key parameteres', key, putParameters)
       await this.s3.send(command)
-      console.log(
-        `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
-      )
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${key}`
     } catch (error) {
       if (error.error) {
@@ -77,25 +72,13 @@ export class S3Service extends CloudProviderService {
       const keyCopy = `${this.s3Bucket}/${imageData.bucketSubdirectory}${imageData.image.imageName}`
       const temporaryExtension = imageData.tempFile ? '.tmp' : ''
       const newKey = `${imageData.bucketSubdirectory}${imageData.newName}${temporaryExtension}`
-      // const keyDelete = `${imageData.bucketSubdirectory}${imageData.image.imageName}`
-
       const copyParameter = {
         Bucket: this.s3Bucket,
         Key: newKey,
         CopySource: keyCopy,
       }
-      console.log('copy', copyParameter)
       const copyCommand = new CopyObjectCommand(copyParameter)
       await this.s3.send(copyCommand)
-
-      // const deleteParameters = {
-      //   Bucket: this.s3Bucket,
-      //   Key: keyDelete,
-      // }
-      // console.log('delete', deleteParameters)
-      // const deleteCommand = new DeleteObjectCommand(deleteParameters)
-
-      // await this.s3.send(deleteCommand)
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${newKey}`
     } catch (error) {
       console.log('This is the error', error)
@@ -113,9 +96,7 @@ export class S3Service extends CloudProviderService {
         Bucket: this.s3Bucket,
         Key: keyDelete,
       }
-      console.log('delete', deleteParameters)
       const deleteCommand = new DeleteObjectCommand(deleteParameters)
-
       await this.s3.send(deleteCommand)
     } catch (error) {
       console.log('This is the error', error)

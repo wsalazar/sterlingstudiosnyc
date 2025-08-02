@@ -12,13 +12,13 @@
         :data="transformedData"
         :columns="columns"
         @record-deleted="fetchGalleryData"
-        @show-overlay="editImages"
+        @display-overlay="displayOverlay"
         @update-cell="editCell"
         @selected-client="selectedClient"
       />
     </div>
   </div>
-  <!-- <Spinner v-if="isLoading" /> -->
+  <Spinner v-if="isLoading" />
 
   <div v-if="!userIsAdmin" class="p-4 mt-4">
     <UserGallery :galleryData="galleryData" />
@@ -63,10 +63,34 @@
   </div>
 
   <div
-    v-if="renderForm && !isLoading"
+    v-if="renderOverlayForm && !isLoading"
     class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
   >
-    <div
+    <Overlay
+      :show="showOverlay"
+      :editMode="editMode"
+      :isImageNameEditable="isImageNameEditable"
+      :isPriceEditable="isPriceEditable"
+      :galleryOverlayTitle="galleryOverlayTitle"
+      :imagesToEdit="imagesToEdit"
+      :formData="formData"
+      :imageId="imageId"
+      :newImageName="newImageName"
+      :newPrice="newPrice"
+      @remove-file="removeFile"
+      @close-modal="closeModal"
+      @remove-gallery-files="removeGalleryFiles"
+      @edit-price="editPrice"
+      @on-enter-price="onEnterPrice"
+      @on-enter-image-name="onEnterImageName"
+      @cancel-image="cancelImage"
+      @edit-image-name="editImageName"
+      @handle-image-upload="handleImageUpload"
+      @handle-submit="handleSubmit"
+      @update:newImageName="(value: string) => newImageName = value"
+      @update:newPrice="(value: number) => newPrice = value"
+    />
+    <!-- <div
       class="relative top-20 p-5 mx-auto w-[80rem] bg-white rounded-md border shadow-lg"
     >
       <div class="mt-3">
@@ -298,19 +322,21 @@
           </div>
         </form>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
 const { isAdmin } = useAuth()
 const userIsAdmin = isAdmin.value
-const renderForm = ref(false)
+const renderOverlayForm = ref(false)
 const editMode = ref(false)
-const imagesToEdit = ref<{ imageName: string; price: string; id: string }[]>([])
-const removedImages = ref<{ imageName: string; price: string; id: string }[]>(
-  []
-)
+const imagesToEdit = ref<
+  { imageName: string; price: string; imageId: string; bucketId: string }[]
+>([])
+const removedImages = ref<
+  { imageName: string; price: string; imageId: string; bucketId: string }[]
+>([])
 const isLoading = ref(false)
 const galleryName = ref<string>('')
 const galleryId = ref<string>('')
@@ -325,7 +351,9 @@ const isImageNameEditable = ref(false)
 const isPriceEditable = ref(false)
 const galleryHasBeenEdited = ref(false)
 const showOverlay = ref(false)
-const hasChanges = ref<{ imageName?: string; price?: string; id: string }[]>([])
+const hasChanges = ref<
+  { imageName?: string; price?: string; imageId: string; bucketId?: string }[]
+>([])
 
 import { upload, gallery } from '../services/api'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -342,37 +370,40 @@ const toast = useToast()
 library.add(faPlus, faTimes)
 
 const galleryOverlayTitle = computed(() =>
-  editMode.value
-    ? `Edit Gallery Item - ${subdirectory.value}`
-    : 'Add New Gallery Item'
+  editMode.value ? `Edit Gallery Item` : 'Add New Gallery Item'
 )
 
-const editPrice = (imageObj: { id: string; price: string }) => {
+const editPrice = (imageObj: { imageId: string; price: string }) => {
   isPriceEditable.value = true
   galleryHasBeenEdited.value = true
-  imageId.value = imageObj.id
+  imageId.value = imageObj.imageId
   newPrice.value = Number(imageObj.price.replace('$', ''))
 }
 
-const editImageName = (imageObj: { id: string; imageName: string }) => {
+const editImageName = (imageObj: { imageId: string; imageName: string }) => {
   isImageNameEditable.value = true
-  imageId.value = imageObj.id
+  imageId.value = imageObj.imageId
   newImageName.value = imageObj.imageName
   galleryHasBeenEdited.value = true
 }
 
-const onEnterPrice = (index: number) => {
-  if (imagesToEdit.value[index].price !== newImageName.value) {
-    imagesToEdit.value[index].price = String(`$${newPrice.value.toFixed(2)}`)
-    const { id, price } = imagesToEdit.value[index]
-    const existingIndex = hasChanges.value.findIndex((item) => item.id === id)
+const onEnterPrice = (
+  newPriceValue: number,
+  imageObj: { imageId: string; price: string }
+) => {
+  if (Number(imageObj.price).toFixed(2) !== newPriceValue.toFixed(2)) {
+    imageObj.price = String(`$${newPriceValue.toFixed(2)}`)
+    const { imageId, price } = imageObj
+    const existingIndex = hasChanges.value.findIndex(
+      (item) => item.imageId === imageId
+    )
     if (existingIndex >= 0) {
       hasChanges.value[existingIndex] = {
         ...hasChanges.value[existingIndex],
         price,
       }
     } else {
-      hasChanges.value.push({ id, price })
+      hasChanges.value.push({ imageId, price })
     }
   }
   isPriceEditable.value = false
@@ -381,19 +412,24 @@ const onEnterPrice = (index: number) => {
 }
 
 const onEnterImageName = (index: number) => {
+  console.log(imagesToEdit.value[index].imageName, newImageName.value)
   if (imagesToEdit.value[index].imageName !== newImageName.value) {
     imagesToEdit.value[index].imageName = newImageName.value
-    const { id, imageName } = imagesToEdit.value[index]
-    const existingIndex = hasChanges.value.findIndex((item) => item.id === id)
+    const { imageId, imageName, bucketId } = imagesToEdit.value[index]
+    const existingIndex = hasChanges.value.findIndex(
+      (item) => item.imageId === imageId
+    )
     if (existingIndex >= 0) {
       hasChanges.value[existingIndex] = {
         ...hasChanges.value[existingIndex],
         imageName,
+        bucketId,
       }
     } else {
-      hasChanges.value.push({ id, imageName })
+      hasChanges.value.push({ imageId, imageName, bucketId })
     }
   }
+  console.log(hasChanges.value)
   isImageNameEditable.value = false
   imageId.value = ''
   newImageName.value = ''
@@ -425,7 +461,7 @@ onMounted(async () => {
 })
 
 const openModal = () => {
-  renderForm.value = true
+  renderOverlayForm.value = true
   editMode.value = false
 }
 
@@ -466,16 +502,28 @@ const editCell = async (row: any, newValue: string, fieldName: string) => {
   await fetchGalleryData()
 }
 
-const editImages = (row: any) => {
-  editMode.value = true
-  renderForm.value = true
-  imagesToEdit.value = row.original.images.map((image: any) => ({
-    imageName: image.imageName,
-    price: `$${image.price.toFixed(2)}`,
-    id: image.id,
-  }))
-  subdirectory.value = row.original.bucketDirectory
-  editUuId.value = row.original.id
+const displayOverlay = (row: any, cellId: string) => {
+  if (cellId === 'images') {
+    editMode.value = true
+    renderOverlayForm.value = true
+    const directory = row.original.galleryBuckets.map((galleryBucket: any) => ({
+      bucket: galleryBucket.bucketDirectory,
+      id: galleryBucket.id,
+    }))
+    imagesToEdit.value = row.original.images.map(
+      (image: any, index: number) => {
+        return {
+          bucket: directory[index].bucket,
+          bucketId: directory[index].id,
+          imageName: `${image.imageName}`,
+          price: `$${image.price.toFixed(2)}`,
+          imageId: image.id,
+        }
+      }
+    )
+    formData.value.event = true
+    editUuId.value = row.original.id
+  }
 }
 
 interface TableData {
@@ -546,7 +594,7 @@ const formData = ref<FormData>({
 })
 
 const closeModal = () => {
-  renderForm.value = false
+  renderOverlayForm.value = false
   formData.value.name = ''
   formData.value.description = ''
   formData.value.images = []
@@ -638,7 +686,7 @@ const handleSubmit = async () => {
       clientEvents: [],
     }
     removedImages.value = []
-    renderForm.value = false
+    renderOverlayForm.value = false
     hasChanges.value = []
     isLoading.value = false
 
@@ -651,7 +699,7 @@ const handleSubmit = async () => {
   } catch (error) {
     /**
      *
-     * @todo if it failes i need to renderForm false
+     * @todo if it failes i need to renderOverlayForm false
      * @todo removedImages to []
      * @todo hasChanges to []
      * @todo some kind of thing that tells the admin something went wrong with

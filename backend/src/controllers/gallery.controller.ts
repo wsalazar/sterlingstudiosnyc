@@ -89,25 +89,32 @@ export class GalleryController {
           const renameFiles = galleryData.newFile
           const prices = galleryData.price
 
+          const processFile = async (
+            file: Express.Multer.File,
+            index: number
+          ) => {
+            let fileName = renameFiles[index] || file.originalname
+            fileName = sanitizeFilename(fileName)
+            const event = clientEvents?.[index] || clientEvents[0]
+            const prefixDirectory = `${subdirectory}${event}/`
+
+            const image = await this.imageService.createLowResolutionImage(
+              file.buffer
+            )
+
+            await this.imageService.saveFile(image, fileName, prefixDirectory)
+
+            const url = await this.cloudProvider.uploadFile(
+              file,
+              fileName,
+              prefixDirectory
+            )
+
+            return { url, imageName: fileName, price: prices[index] }
+          }
+
           imagesData = await Promise.all(
-            files.map(async (file, index) => {
-              let fileName = renameFiles[index] || file.originalname
-              fileName = sanitizeFilename(fileName)
-              const image = await this.imageService.createLowResolutionImage(
-                file.buffer
-              )
-              const prefixDirectory =
-                clientEvents.length > 1
-                  ? subdirectory + clientEvents[index] + '/'
-                  : subdirectory + clientEvents[0] + '/'
-              await this.imageService.saveFile(image, fileName, prefixDirectory)
-              const url = await this.cloudProvider.uploadFile(
-                file,
-                fileName,
-                prefixDirectory
-              )
-              return { url, imageName: fileName, price: prices[index] }
-            })
+            files.map((file, index) => processFile(file, index))
           )
         } catch (error) {
           const status = error.status || 500

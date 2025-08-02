@@ -90,8 +90,8 @@ export const upload = {
   },
   patchImage: async (patchData: {
     id: string
-    imagesToEdit?: { imageName?: string; price?: string; id: string }[]
-    removedImages: { imageName: string; price: string; id: string }[]
+    imagesToEdit?: { imageName?: string; price?: string; imageId: string }[]
+    removedImages: { imageName: string; price: string; imageId: string }[]
     images: File[]
     price: string[]
     newFile: string[]
@@ -116,7 +116,7 @@ export const upload = {
     }
     if (removedImages) {
       for (let index = 0; index < removedImages.length; index++) {
-        formData.append('removedImages[]', removedImages[index].id)
+        formData.append('removedImages[]', removedImages[index].imageId)
       }
     }
     await api.patch(`v1/gallery/${id}`, formData)

@@ -113,9 +113,12 @@
                   <font-awesome-icon :icon="['fas', 'x']" class="w-4 h-4" />
                 </span>
                 <span
-                  v-else-if="cell.column.id === 'images'"
+                  v-else-if="
+                    cell.column.id.includes('images') ||
+                    cell.column.id.includes('bucketDirectory')
+                  "
                   class="cursor-pointer text-[#f59e0b]"
-                  @click="editImages(row)"
+                  @click="editCell(row, cell.column.id)"
                 >
                   Click to Edit
                 </span>
@@ -261,7 +264,7 @@ const selectClient = (row: any, event: any) => {
 
 const emit = defineEmits<{
   'record-deleted': []
-  'show-overlay': [any]
+  'display-overlay': [row: any, cellId: string]
   'update-cell': [row: any, cellValue: string, fieldName: string]
   'selected-client': [row: any, selected: { code: string; name: string }]
 }>()
@@ -312,8 +315,8 @@ const deleteRecord = async (row: any) => {
 
 const updateInput = (row: any) => {}
 
-const editImages = (row: any) => {
-  emit('show-overlay', row)
+const editCell = (row: any, cellId: string) => {
+  emit('display-overlay', row, cellId)
 }
 
 const getCellKey = (row: any, cell: any) => `${row.id}_${cell.column.id}`
