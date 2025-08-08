@@ -113,17 +113,30 @@
                   <font-awesome-icon :icon="['fas', 'x']" class="w-4 h-4" />
                 </span>
                 <span
-                  v-else-if="
-                    cell.column.id.includes('images') ||
-                    cell.column.id.includes('bucketDirectory')
-                  "
+                  v-else-if="cell.column.id.includes('images')"
                   class="cursor-pointer text-[#f59e0b]"
                   @click="editCell(row, cell.column.id)"
                 >
                   Click to Edit
                 </span>
-                <span v-else>
+                <span
+                  v-else
+                  :class="
+                    cell.column.id === 'name' ||
+                    cell.column.id === 'description'
+                      ? 'flex justify-end items-center cursor-pointer'
+                      : ''
+                  "
+                >
                   {{ cell.renderValue() }}
+                  <font-awesome-icon
+                    v-if="
+                      cell.column.id === 'name' ||
+                      cell.column.id === 'description'
+                    "
+                    :icon="['fas', 'pencil']"
+                    class="ml-1 w-3 h-3 text-gray-400"
+                  />
                 </span>
               </span>
             </td>
@@ -214,6 +227,7 @@ import {
   faTimes,
   faPlus,
   faX,
+  faPencil,
 } from '@fortawesome/free-solid-svg-icons'
 
 import Dropdown from 'primevue/dropdown'
@@ -233,7 +247,8 @@ library.add(
   faFilter,
   faTimes,
   faPlus,
-  faX
+  faX,
+  faPencil
 )
 
 const props = defineProps<{
@@ -324,10 +339,10 @@ const getCellKey = (row: any, cell: any) => `${row.id}_${cell.column.id}`
 const isCellEditable = (cell: any) =>
   ![
     'createAt',
+    'updatedAt',
     'user_name',
     'totalSize',
     'delete',
-    'bucketDirectory',
     'images',
     'clients',
   ].includes(cell.column.id)

@@ -118,6 +118,13 @@ export class GalleryRepository {
     }
   }
 
+  async getGalleryBucketDirectoryByBucketId(bucketId: string) {
+    return await this.prisma.galleryBucket.findUnique({
+      where: { id: bucketId },
+      select: { bucketDirectory: true },
+    })
+  }
+
   async getGalleryById(id: string) {
     try {
       return await this.prisma.gallery.findUnique({
@@ -230,7 +237,7 @@ export class GalleryRepository {
     }
   }
 
-  async getImageNameById(imgId: string) {
+  async getImageNameById(imgId: string): Promise<{ imageName: string }> {
     try {
       return await this.prisma.image.findUnique({
         where: { id: imgId },

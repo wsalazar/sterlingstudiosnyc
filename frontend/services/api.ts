@@ -95,30 +95,47 @@ export const upload = {
     images: File[]
     price: string[]
     newFile: string[]
+    clientEvents: string[]
   }) => {
-    const { id, images, price, newFile, imagesToEdit, removedImages } =
-      patchData
+    const {
+      id,
+      images,
+      price,
+      newFile,
+      imagesToEdit,
+      removedImages,
+      clientEvents,
+    } = patchData
     const formData = new FormData()
 
     for (let index = 0; index < images.length; index++) {
-      /**
-       * For new images
-       */
-      formData.append(`image`, images[index])
-      formData.append(`newPrice[]`, price[index])
-      formData.append(`newFile[]`, newFile[index])
+      formData.append('images', images[index])
+      formData.append('newPrice', price[index])
+      formData.append('newFile', newFile[index])
+      formData.append(
+        'clientEvents',
+        clientEvents.length > 0 ? clientEvents[index] : clientEvents[0]
+      )
     }
 
     if (imagesToEdit) {
       for (let index = 0; index < imagesToEdit.length; index++) {
-        formData.append('existingImages[]', JSON.stringify(imagesToEdit[index]))
+        formData.append('existingImages', JSON.stringify(imagesToEdit[index]))
       }
     }
     if (removedImages) {
       for (let index = 0; index < removedImages.length; index++) {
-        formData.append('removedImages[]', removedImages[index].imageId)
+        formData.append('removedImages', removedImages[index].imageId)
       }
     }
+    // console.log(formData.getAll('existingImages[]'))
+    // console.log(formData.getAll('removedImages[]'))
+    // console.log(formData.getAll('newFile[]'))
+    // console.log(formData.getAll('newPrice[]'))
+    // console.log(formData.getAll('image[]'))
+    // console.log(formData.getAll('clientEvents[]'))
+    // console.log(formData.getAll('images[]'))
+
     await api.patch(`v1/gallery/${id}`, formData)
   },
 }

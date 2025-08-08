@@ -35,12 +35,12 @@
             placeholder="Enter Client's name"
           />
         </div>
-        <div v-if="editMode" class="flex">
+        <div class="flex">
           <input
             type="checkbox"
             id="event"
             v-model="formData.event"
-            @change="!formData.event"
+            @change="handleEventChange"
             class="block mt-1 mr-2 w-5 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           />
           <label
@@ -50,7 +50,7 @@
           >
         </div>
 
-        <div v-if="editMode && formData.event">
+        <div v-if="formData.event">
           <label
             for="clientEvent"
             class="block text-sm font-medium text-gray-700"
@@ -106,67 +106,109 @@
           </div>
           <div v-if="editMode === true">
             <p class="mt-2 mb-2 text-sm font-bold text-gray-500">
+              Client - {{ props.imagesToEdit[0].client }}<br />
               Gallery files:
             </p>
-            <ul class="space-y-1">
-              <li
-                v-for="(imageObj, index) in props.imagesToEdit"
-                :key="index"
-                :data-image-id="imageObj.imageId"
-                class="flex gap-2 text-sm text-gray-600"
-              >
-                <span class="w-[8rem] p-0 m-0 truncate">{{
-                  `${imageObj.bucket}`
-                }}</span>
-                <span
-                  v-if="
-                    !(
-                      props.isImageNameEditable &&
-                      imageObj.imageId === props.imageId &&
-                      !props.isPriceEditable
-                    )
-                  "
-                  class="w-[15rem] p-0 m-0 truncate"
-                  @click="editImageName(imageObj)"
-                  >{{ `${imageObj.imageName}` }}</span
+            <table
+              class="w-full border border-gray-300 border-collapse table-fixed"
+            >
+              <thead>
+                <tr class="bg-gray-50">
+                  <th
+                    class="px-3 py-2 w-1/4 text-sm font-medium text-left text-gray-700 border border-gray-300"
+                  >
+                    Bucket
+                  </th>
+                  <th
+                    class="px-3 py-2 w-1/3 text-sm font-medium text-left text-gray-700 border border-gray-300"
+                  >
+                    Image Name
+                  </th>
+                  <th
+                    class="px-3 py-2 w-1/6 text-sm font-medium text-left text-gray-700 border border-gray-300"
+                  >
+                    Price
+                  </th>
+                  <th
+                    class="px-3 py-2 w-16 text-sm font-medium text-center text-gray-700 border border-gray-300"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(imageObj, index) in props.imagesToEdit"
+                  :key="index"
+                  :data-image-id="imageObj.imageId"
+                  class="hover:bg-gray-50"
                 >
-                <input
-                  v-else
-                  class="rounded-md border-none outline-none w-[15rem] p-0 focus:ring-0"
-                  type="text"
-                  v-model="newImageName"
-                  @keydown.enter.prevent="onEnterImageName(index)"
-                  @keyup.esc="cancelImage"
-                />
-                <span
-                  class="w-[6rem] p-0 m-0 truncate"
-                  v-if="
-                    !(
-                      props.isPriceEditable &&
-                      imageObj.imageId === props.imageId &&
-                      !props.isImageNameEditable
-                    )
-                  "
-                  @click="editPrice(imageObj)"
-                  >{{ imageObj.price }}</span
-                >
-                <input
-                  v-else
-                  class="p-0 rounded-md border-none outline-none focus:ring-0 w-[6rem]"
-                  type="number"
-                  v-model="newPrice"
-                  @keydown.enter.prevent="onEnterPrice(index)"
-                  @keyup.esc="cancelImage"
-                />
-                <button
-                  type="button"
-                  @click="removeGalleryFiles(index)"
-                  class="text-red-500 hover:text-red-700"
-                >
-                  <font-awesome-icon :icon="['fas', 'times']" class="w-4 h-4" />
-                </button>
-              </li>
-            </ul>
+                  <td class="px-3 py-2 border border-gray-300">
+                    <EditableField
+                      :isEditable="shouldShowBucketDirectorySpan(imageObj)"
+                      :imageObj="imageObj"
+                      :imageId="props.imageId"
+                      :index="index"
+                      :spanClass="'w-full p-0 m-0 truncate'"
+                      :inputClass="'min-w-fit max-w-full rounded-md border-blue-500 pl-2 py-1 focus:ring-0'"
+                      :inputValue="newBucketDirectory"
+                      :spanValue="imageObj.bucket"
+                      :name="'bucket'"
+                      :type="'text'"
+                      :onEnter="(e: Event) => onEnterBucketDirectory(e, index)"
+                      :cancel="cancelBucketDirectory"
+                      @click-to-edit="editBucketDirectory"
+                    />
+                  </td>
+                  <td class="px-3 py-2 border border-gray-300">
+                    <EditableField
+                      :isEditable="shouldShowImageNameSpan(imageObj)"
+                      :imageObj="imageObj"
+                      :imageId="props.imageId"
+                      :index="index"
+                      :spanClass="'w-full p-0 m-0 truncate'"
+                      :inputClass="'min-w-fit max-w-full rounded-md border-blue-500 pl-2 py-1 focus:ring-0'"
+                      :inputValue="newImageName"
+                      :spanValue="imageObj.imageName"
+                      :type="'text'"
+                      :name="'imageName'"
+                      :onEnter="(e: Event) => onEnterImageName(e,index)"
+                      :cancel="cancelImage"
+                      @click-to-edit="editImageName"
+                    />
+                  </td>
+                  <td class="px-3 py-2 border border-gray-300">
+                    <EditableField
+                      :isEditable="shouldShowPriceSpan(imageObj)"
+                      :imageObj="imageObj"
+                      :imageId="props.imageId"
+                      :index="index"
+                      :spanClass="'w-full p-0 m-0 truncate'"
+                      :inputClass="'w-20 rounded-md border-blue-500 pl-2 py-1 focus:ring-0'"
+                      :inputValue="String(newPrice)"
+                      :spanValue="imageObj.price"
+                      :type="'number'"
+                      :name="'price'"
+                      :onEnter="(e: Event) => onEnterPrice(e, index)"
+                      :cancel="cancelPrice"
+                      @click-to-edit="editPrice"
+                    />
+                  </td>
+                  <td class="px-3 py-2 text-center border border-gray-300">
+                    <button
+                      type="button"
+                      @click="removeGalleryFiles(index)"
+                      class="text-red-500 hover:text-red-700"
+                    >
+                      <font-awesome-icon
+                        :icon="['fas', 'times']"
+                        class="w-4 h-4"
+                      />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <div v-if="formData.images.length > 0" class="mt-2">
@@ -247,13 +289,16 @@
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { computed } from 'vue'
 
 library.add(faPlus, faTimes)
 
 const props = defineProps<{
   newImageName: string
+  newBucketDirectory: string
   newPrice: number
   isImageNameEditable: boolean
+  isBucketDirectoryEditable: boolean
   isPriceEditable: boolean
   galleryOverlayTitle: string
   editMode: boolean
@@ -263,6 +308,7 @@ const props = defineProps<{
     price: string
     imageId: string
     bucket: string
+    client: string
   }[]
   formData: {
     name: string
@@ -279,9 +325,42 @@ const props = defineProps<{
     clientEvents: string[]
   }
 }>()
+
+// Computed properties to simplify template logic
+const isEditingBucketDirectory = computed(
+  () =>
+    props.isBucketDirectoryEditable &&
+    !props.isImageNameEditable &&
+    !props.isPriceEditable
+)
+
+const isEditingImageName = computed(
+  () => props.isImageNameEditable && !props.isPriceEditable
+)
+
+const isEditingPrice = computed(
+  () => props.isPriceEditable && !props.isImageNameEditable
+)
+
+const shouldShowBucketDirectorySpan = computed(() => (imageObj: any) => {
+  return !(isEditingBucketDirectory.value && imageObj.imageId === props.imageId)
+})
+
+const shouldShowImageNameSpan = computed(() => (imageObj: any) => {
+  return !(isEditingImageName.value && imageObj.imageId === props.imageId)
+})
+
+const shouldShowPriceSpan = computed(() => (imageObj: any) => {
+  return !(isEditingPrice.value && imageObj.imageId === props.imageId)
+})
+
 const newImageName = computed({
   get: () => props.newImageName,
   set: (value: string) => emit('update:newImageName', value),
+})
+const newBucketDirectory = computed({
+  get: () => props.newBucketDirectory,
+  set: (value: string) => emit('update:newBucketDirectory', value),
 })
 
 const newPrice = computed({
@@ -303,13 +382,21 @@ const emit = defineEmits<{
     imageObj: { imageId: string; price: string }
   ): void
   (e: 'cancel-image'): void
-  (e: 'on-enter-image-name', index: number): void
+  (e: 'cancel-price'): void
+  (e: 'cancel-bucket-directory'): void
+  (e: 'on-enter-image-name', newValue: string, index: number): void
   (e: 'edit-image-name', imageObj: { imageId: string; imageName: string }): void
   (e: 'handle-image-upload', event: Event): void
   (e: 'handle-submit'): void
   (e: 'handle-cancel'): void
   (e: 'update:newImageName', value: string): void
   (e: 'update:newPrice', value: number): void
+  (e: 'update:newBucketDirectory', value: string): void
+  (e: 'on-enter-bucket-directory', value: string, index: number): void
+  (
+    e: 'edit-bucket-directory',
+    imageObj: { imageId: string; bucket: string }
+  ): void
 }>()
 
 const removeFile = (index: number) => {
@@ -328,23 +415,58 @@ const editPrice = (imageObj: { imageId: string; price: string }) => {
   emit('edit-price', imageObj)
 }
 
-const onEnterPrice = (index: number) => {
-  emit('on-enter-price', props.newPrice, props.imagesToEdit[index])
+const onEnterPrice = (e: Event, index: number) => {
+  const input = e.target as HTMLInputElement | null
+  const newValue = input ? Number(input.value) : props.newPrice
+  /**
+   * @todo investigate update:newPrice in more depth once I
+   * finish the new component
+   */
+  // emit('update:newPrice', newValue)
+  emit('on-enter-price', newValue, props.imagesToEdit[index])
+}
+
+const onEnterBucketDirectory = (e: Event, index: number) => {
+  const input = e.target as HTMLInputElement | null
+  const newValue = input ? input.value : props.newBucketDirectory
+  emit('on-enter-bucket-directory', newValue, index)
+}
+
+const onEnterImageName = (e: Event, index: number) => {
+  const input = e.target as HTMLInputElement | null
+  const newValue = input ? input.value : props.newImageName
+  emit('on-enter-image-name', newValue, index)
+}
+
+const cancelBucketDirectory = () => {
+  emit('cancel-bucket-directory')
+}
+
+const cancelPrice = () => {
+  emit('cancel-price')
 }
 
 const cancelImage = () => {
   emit('cancel-image')
 }
 
-const onEnterImageName = (index: number) => {
-  emit('on-enter-image-name', index)
+const editBucketDirectory = (imageObj: { imageId: string; bucket: string }) => {
+  emit('edit-bucket-directory', imageObj)
 }
+
 const editImageName = (imageObj: { imageId: string; imageName: string }) => {
   emit('edit-image-name', imageObj)
 }
 
 const handleImageUpload = (event: Event) => {
   emit('handle-image-upload', event)
+}
+
+const handleEventChange = () => {
+  if (!props.formData.event) {
+    props.formData.clientEvent = ''
+    props.formData.clientEvents = []
+  }
 }
 
 const handleSubmit = async () => {

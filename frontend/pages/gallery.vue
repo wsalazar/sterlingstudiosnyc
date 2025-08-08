@@ -62,35 +62,45 @@
     </div>
   </div>
 
-  <div
-    v-if="renderOverlayForm && !isLoading"
-    class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
-  >
-    <Overlay
-      :show="showOverlay"
-      :editMode="editMode"
-      :isImageNameEditable="isImageNameEditable"
-      :isPriceEditable="isPriceEditable"
-      :galleryOverlayTitle="galleryOverlayTitle"
-      :imagesToEdit="imagesToEdit"
-      :formData="formData"
-      :imageId="imageId"
-      :newImageName="newImageName"
-      :newPrice="newPrice"
-      @remove-file="removeFile"
-      @close-modal="closeModal"
-      @remove-gallery-files="removeGalleryFiles"
-      @edit-price="editPrice"
-      @on-enter-price="onEnterPrice"
-      @on-enter-image-name="onEnterImageName"
-      @cancel-image="cancelImage"
-      @edit-image-name="editImageName"
-      @handle-image-upload="handleImageUpload"
-      @handle-submit="handleSubmit"
-      @update:newImageName="(value: string) => newImageName = value"
-      @update:newPrice="(value: number) => newPrice = value"
-    />
-    <!-- <div
+  <Transition name="backdrop" appear>
+    <div
+      v-if="renderOverlayForm && !isLoading"
+      class="overflow-y-auto fixed inset-0 w-full h-full bg-gray-600 bg-opacity-50"
+    >
+      <Transition name="modal" appear>
+        <Overlay
+          :show="showOverlay"
+          :editMode="editMode"
+          :isBucketDirectoryEditable="isBucketDirectoryEditable"
+          :isImageNameEditable="isImageNameEditable"
+          :isPriceEditable="isPriceEditable"
+          :galleryOverlayTitle="galleryOverlayTitle"
+          :imagesToEdit="imagesToEdit"
+          :formData="formData"
+          :imageId="imageId"
+          :newImageName="newImageName"
+          :newBucketDirectory="newBucketDirectory"
+          :newPrice="newPrice"
+          @remove-file="removeFile"
+          @close-modal="closeModal"
+          @remove-gallery-files="removeGalleryFiles"
+          @edit-price="editPrice"
+          @on-enter-price="onEnterPrice"
+          @on-enter-bucket-directory="onEnterBucketDirectory"
+          @on-enter-image-name="onEnterImageName"
+          @cancel-price="cancelPrice"
+          @cancel-image="cancelImage"
+          @cancel-bucket-directory="cancelBucketDirectory"
+          @edit-image-name="editImageName"
+          @edit-bucket-directory="editBucketDirectory"
+          @handle-image-upload="handleImageUpload"
+          @handle-submit="handleSubmit"
+          @update:newImageName="(value: string) => newImageName = value"
+          @update:newBucketDirectory="(value: string) => newBucketDirectory = value"
+          @update:newPrice="(value: number) => newPrice = value"
+        />
+      </Transition>
+      <!-- <div
       class="relative top-20 p-5 mx-auto w-[80rem] bg-white rounded-md border shadow-lg"
     >
       <div class="mt-3">
@@ -323,7 +333,8 @@
         </form>
       </div>
     </div> -->
-  </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -332,7 +343,13 @@ const userIsAdmin = isAdmin.value
 const renderOverlayForm = ref(false)
 const editMode = ref(false)
 const imagesToEdit = ref<
-  { imageName: string; price: string; imageId: string; bucketId: string }[]
+  {
+    imageName: string
+    price: string
+    imageId: string
+    bucket: string
+    bucketId: string
+  }[]
 >([])
 const removedImages = ref<
   { imageName: string; price: string; imageId: string; bucketId: string }[]
@@ -345,14 +362,22 @@ const clientId = ref<string>('')
 const editUuId = ref('')
 const subdirectory = ref('')
 const newImageName = ref('')
+const newBucketDirectory = ref('')
 const newPrice = ref<number>(0)
 const imageId = ref('')
 const isImageNameEditable = ref(false)
+const isBucketDirectoryEditable = ref(false)
 const isPriceEditable = ref(false)
 const galleryHasBeenEdited = ref(false)
 const showOverlay = ref(false)
 const hasChanges = ref<
-  { imageName?: string; price?: string; imageId: string; bucketId?: string }[]
+  {
+    imageName?: string
+    price?: string
+    imageId: string
+    bucket?: string
+    bucketId?: string
+  }[]
 >([])
 
 import { upload, gallery } from '../services/api'
@@ -374,6 +399,11 @@ const galleryOverlayTitle = computed(() =>
 )
 
 const editPrice = (imageObj: { imageId: string; price: string }) => {
+  console.log('gallery editPrice', imageObj)
+  // Reset other editing states first
+  isImageNameEditable.value = false
+  isBucketDirectoryEditable.value = false
+  // Set price editing state
   isPriceEditable.value = true
   galleryHasBeenEdited.value = true
   imageId.value = imageObj.imageId
@@ -381,9 +411,20 @@ const editPrice = (imageObj: { imageId: string; price: string }) => {
 }
 
 const editImageName = (imageObj: { imageId: string; imageName: string }) => {
+  isPriceEditable.value = false
+  isBucketDirectoryEditable.value = false
   isImageNameEditable.value = true
   imageId.value = imageObj.imageId
   newImageName.value = imageObj.imageName
+  galleryHasBeenEdited.value = true
+}
+
+const editBucketDirectory = (imageObj: { imageId: string; bucket: string }) => {
+  isPriceEditable.value = false
+  isImageNameEditable.value = false
+  isBucketDirectoryEditable.value = true
+  imageId.value = imageObj.imageId
+  newBucketDirectory.value = imageObj.bucket
   galleryHasBeenEdited.value = true
 }
 
@@ -411,11 +452,32 @@ const onEnterPrice = (
   newPrice.value = 0
 }
 
-const onEnterImageName = (index: number) => {
-  console.log(imagesToEdit.value[index].imageName, newImageName.value)
-  if (imagesToEdit.value[index].imageName !== newImageName.value) {
-    imagesToEdit.value[index].imageName = newImageName.value
-    const { imageId, imageName, bucketId } = imagesToEdit.value[index]
+const onEnterBucketDirectory = (newValue: string, index: number) => {
+  if (imagesToEdit.value[index].bucket !== newValue) {
+    imagesToEdit.value[index].bucket = newValue
+    const { imageId, bucket, bucketId } = imagesToEdit.value[index]
+    const existingIndex = hasChanges.value.findIndex(
+      (item) => item.imageId === imageId
+    )
+    if (existingIndex >= 0) {
+      hasChanges.value[existingIndex] = {
+        ...hasChanges.value[existingIndex],
+        bucket,
+        bucketId,
+      }
+    } else {
+      hasChanges.value.push({ imageId, bucket, bucketId })
+    }
+  }
+  isBucketDirectoryEditable.value = false
+  imageId.value = ''
+  newBucketDirectory.value = ''
+}
+
+const onEnterImageName = (newValue: string, index: number) => {
+  if (imagesToEdit.value[index].imageName !== newValue) {
+    imagesToEdit.value[index].imageName = newValue
+    const { imageId, imageName, bucket, bucketId } = imagesToEdit.value[index]
     const existingIndex = hasChanges.value.findIndex(
       (item) => item.imageId === imageId
     )
@@ -423,32 +485,55 @@ const onEnterImageName = (index: number) => {
       hasChanges.value[existingIndex] = {
         ...hasChanges.value[existingIndex],
         imageName,
+        bucket,
         bucketId,
       }
     } else {
-      hasChanges.value.push({ imageId, imageName, bucketId })
+      hasChanges.value.push({ imageId, imageName, bucket, bucketId })
     }
   }
-  console.log(hasChanges.value)
   isImageNameEditable.value = false
   imageId.value = ''
+  newImageName.value = ''
+}
+
+const cancelPrice = () => {
+  isImageNameEditable.value = false
+  isPriceEditable.value = false
+  isBucketDirectoryEditable.value = false
+  galleryHasBeenEdited.value = false
+  imageId.value = ''
+  newPrice.value = 0
+  newBucketDirectory.value = ''
   newImageName.value = ''
 }
 
 const cancelImage = () => {
   isImageNameEditable.value = false
   isPriceEditable.value = false
+  isBucketDirectoryEditable.value = false
   galleryHasBeenEdited.value = false
   imageId.value = ''
   newImageName.value = ''
+  newBucketDirectory.value = ''
   newPrice.value = 0
+}
+
+const cancelBucketDirectory = () => {
+  isImageNameEditable.value = false
+  isPriceEditable.value = false
+  isBucketDirectoryEditable.value = false
+  galleryHasBeenEdited.value = false
+  imageId.value = ''
+  newBucketDirectory.value = ''
+  newPrice.value = 0
+  newImageName.value = ''
 }
 
 const fetchGalleryData = async () => {
   try {
     const galleries = await gallery.get()
     data.value = galleries.data
-    console.log(galleries.data)
   } catch (error) {
     console.error('Error fetching gallery:', error)
   }
@@ -510,10 +595,31 @@ const displayOverlay = (row: any, cellId: string) => {
       bucket: galleryBucket.bucketDirectory,
       id: galleryBucket.id,
     }))
+    const client = directory
+      .map((item: { bucket: string; id: string }) => {
+        return item.bucket.substring(0, item.bucket.indexOf('/'))
+      })
+      .filter((item: string, index: number, self: string[]) => {
+        return self.indexOf(item) === index
+      })
+      .pop()
+
+    const subdirectories = directory.map(
+      (item: { bucket: string; id: string }) => {
+        return {
+          bucket: item.bucket.substring(
+            item.bucket.indexOf('/') + 1,
+            item.bucket.length
+          ),
+        }
+      }
+    )
+
     imagesToEdit.value = row.original.images.map(
       (image: any, index: number) => {
         return {
-          bucket: directory[index].bucket,
+          client: client,
+          bucket: subdirectories[index].bucket,
           bucketId: directory[index].id,
           imageName: `${image.imageName}`,
           price: `$${image.price.toFixed(2)}`,
@@ -613,10 +719,18 @@ const handleImageUpload = (event: Event) => {
   }
 }
 
-const removeGalleryFiles = (index: number) => {
-  const removed = imagesToEdit.value[index]
-  if (removed) {
-    removedImages.value.push(removed)
+const removeGalleryFiles = (imageToRemove: {
+  imageName: string
+  price: string
+  imageId: string
+  bucket: string
+  bucketId: string
+}) => {
+  if (imageToRemove) {
+    removedImages.value.push(imageToRemove)
+    const index = imagesToEdit.value.findIndex(
+      (image) => image.imageId === imageToRemove.imageId
+    )
     imagesToEdit.value.splice(index, 1)
   }
 }
@@ -627,9 +741,9 @@ const removeFile = (index: number) => {
 
 const handleSubmit = async () => {
   try {
-    isLoading.value = true
     if (editMode.value) {
-      const { images, price, newFile } = formData.value
+      const { images, price, newFile, clientEvents, clientEvent } =
+        formData.value
       const newRenamedFiles = [...newFile]
 
       const existingImages = imagesToEdit.value.map(
@@ -643,23 +757,23 @@ const handleSubmit = async () => {
       const uniqueImages = [...new Set(existingImages)]
       if (uniqueImages.length !== existingImages.length) {
         toast.error('You have a non-unique image name as a gallery image!')
-        isLoading.value = false
-        return
+        // isLoading.value = false
+        // return
       }
 
       const uniqueSelectedImages = [...new Set(selectedImages)]
       if (selectedImages.length !== uniqueSelectedImages.length) {
         toast.error('You have a non-unique image name as a selected image!')
-        isLoading.value = false
-        return
+        // isLoading.value = false
+        // return
       }
 
       const combinedImageNames = [...existingImages, ...selectedImages]
       const uniqueCombinedImages = [...new Set(combinedImageNames)]
       if (combinedImageNames.length !== uniqueCombinedImages.length) {
         toast.error('You have a non-unique image name!')
-        isLoading.value = false
-        return
+        // isLoading.value = false
+        // return
       }
 
       const payload = {
@@ -669,30 +783,35 @@ const handleSubmit = async () => {
         price: price,
         newFile: newFile,
         removedImages: removedImages.value,
+        clientEvents: clientEvents.length > 0 ? clientEvents : [clientEvent],
       }
       await upload.patchImage(payload)
-    } else {
-      await upload.image(formData.value)
     }
-    formData.value = {
-      name: '',
-      description: '',
-      images: [],
-      clientDirectoryName: '',
-      newFile: [],
-      price: [],
-      event: true,
-      clientEvent: '',
-      clientEvents: [],
-    }
-    removedImages.value = []
-    renderOverlayForm.value = false
-    hasChanges.value = []
-    isLoading.value = false
+    console.log('renderOverlayForm', renderOverlayForm.value)
+    console.log('isLoading', isLoading.value)
+    // else {
+    //   await upload.image(formData.value)
+    // }
+    // formData.value = {
+    //   name: '',
+    //   description: '',
+    //   images: [],
+    //   clientDirectoryName: '',
+    //   newFile: [],
+    //   price: [],
+    //   event: true,
+    //   clientEvent: '',
+    //   clientEvents: [],
+    // }
+    // removedImages.value = []
+    // renderOverlayForm.value = false
+    // hasChanges.value = []
+    // isLoading.value = false
+    // isLoading.value = true
 
-    await fetchGalleryData()
+    // await fetchGalleryData()
     if (editMode.value) {
-      toast.success('Successfully edited a Gallery!')
+      // toast.success('Successfully edited a Gallery!')
     } else {
       toast.success('Successfully created a Gallery!')
     }
@@ -705,7 +824,7 @@ const handleSubmit = async () => {
      * @todo some kind of thing that tells the admin something went wrong with
      * logs
      * */
-    console.error('Error submitting form:', error)
+    // console.error('Error submitting form:', error)
   }
 }
 
@@ -725,10 +844,6 @@ const columns: ColumnDef<TableData>[] = [
   {
     accessorKey: 'images',
     header: 'Images',
-  },
-  {
-    accessorKey: 'bucketDirectory',
-    header: 'Subdirectory',
   },
   {
     accessorKey: 'totalSize',
@@ -753,4 +868,25 @@ definePageMeta({
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Backdrop fade */
+.backdrop-enter-active,
+.backdrop-leave-active {
+  transition: opacity 200ms ease;
+}
+.backdrop-enter-from,
+.backdrop-leave-to {
+  opacity: 0;
+}
+
+/* Modal materialize: fade + slight scale up */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+</style>
