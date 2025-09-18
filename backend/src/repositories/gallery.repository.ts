@@ -14,19 +14,10 @@ export class GalleryRepository {
     totalSize: number
     clientEvents: string[]
   }): Promise<Gallery> {
-    console.log('images', galleryData.images)
-    return await this.prisma.gallery.create({
+    const gallery = await this.prisma.gallery.create({
       data: {
         name: galleryData.name,
         description: galleryData.description,
-        images: galleryData.images
-          ? {
-              create: galleryData.images.map((img) => ({
-                ...img,
-                price: Number(img.price),
-              })),
-            }
-          : undefined,
         createdBy: galleryData.createdBy,
         totalSize: galleryData.totalSize,
         galleryBuckets: {
@@ -35,6 +26,26 @@ export class GalleryRepository {
           })),
         },
       },
+      include: {
+        galleryBuckets: true,
+      },
+    })
+
+    if (galleryData.images && galleryData.images.length > 0) {
+      const imagesWithBuckets = galleryData.images.map((img, index) => ({
+        ...img,
+        price: Number(img.price),
+        galleryId: gallery.id,
+        galleryBucketId:
+          gallery.galleryBuckets[index % gallery.galleryBuckets.length].id,
+      }))
+
+      await this.prisma.image.createMany({
+        data: imagesWithBuckets,
+      })
+    }
+    return await this.prisma.gallery.findUnique({
+      where: { id: gallery.id },
       include: {
         images: true,
         galleryBuckets: true,
@@ -49,20 +60,17 @@ export class GalleryRepository {
 
   async updateGallery(
     galleryId: string,
-    galleryData: { url: string; imageName: string; price: string }[],
+    galleryData: {
+      url: string
+      imageName: string
+      price: string
+      clientEvents: string[]
+    }[],
     totalSize: number
   ) {
     try {
-      return await this.prisma.gallery.update({
+      const gallery = await this.prisma.gallery.update({
         data: {
-          images: galleryData
-            ? {
-                create: galleryData.map((img) => ({
-                  ...img,
-                  price: Number(img.price),
-                })),
-              }
-            : undefined,
           totalSize: totalSize,
         },
         include: {
@@ -70,6 +78,23 @@ export class GalleryRepository {
         },
         where: { id: galleryId },
       })
+      // // if (galleryData.images && galleryData.images.length > 0) {
+      // const imagesWithBuckets = galleryData.images.map((img, index) => ({
+      //   ...img,
+      //   price: Number(img.price),
+      //   galleryId: gallery.id,
+      //   galleryBucketId:
+      //     gallery.galleryBuckets[index % gallery.galleryBuckets.length].id,
+      // }))
+      // await this.prisma.image.createMany({
+      //   data: galleryData.map((img) => ({
+      //     ...img,
+      //     price: Number(img.price),
+      //     galleryId: galleryId,
+      //     galleryBucketId: img.clientEvents[0],
+      //   })),
+      // })
+      return gallery
     } catch (error) {
       throw new Error('There was an error saving your gallery:' + error)
     }
@@ -249,6 +274,26 @@ export class GalleryRepository {
       }
       throw new Error(`Could not find image: ${error}`)
     }
+  }
+
+  async updateImageByImageId(
+    imgId: string,
+    imageData: { imageName?: string; url?: string; price?: number }
+  ) {
+    await this.prisma.image.update({
+      where: { id: imgId },
+      data: imageData,
+    })
+  }
+
+  async updateGalleryBucketDirectory(
+    bucketId: string,
+    newBucketDirectory: string
+  ) {
+    await this.prisma.galleryBucket.update({
+      where: { id: bucketId },
+      data: { bucketDirectory: newBucketDirectory },
+    })
   }
 
   async updateImages(

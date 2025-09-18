@@ -40,4 +40,8 @@ export abstract class CloudProviderService {
     image: { imageName: string }
     bucketSubdirectory: string
   })
+
+  abstract pathExists(path: string): Promise<boolean>
+
+  abstract moveObject(oldKey: string, newKey: string): Promise<string>
 }

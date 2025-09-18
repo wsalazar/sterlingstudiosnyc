@@ -9,6 +9,7 @@ import {
   DeleteObjectsCommand,
   RenameObjectCommand,
   CopyObjectCommand,
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3'
 import { CloudProviderService } from './cloudprovider.service'
 
@@ -70,14 +71,19 @@ export class S3Service extends CloudProviderService {
      */
     try {
       const keyCopy = `${this.s3Bucket}/${imageData.bucketSubdirectory}${imageData.image.imageName}`
+      console.log('keyCopy', keyCopy)
       const temporaryExtension = imageData.tempFile ? '.tmp' : ''
+      console.log('temporaryExtension', temporaryExtension)
       const newKey = `${imageData.bucketSubdirectory}${imageData.newName}${temporaryExtension}`
+      console.log('newKey', newKey)
       const copyParameter = {
         Bucket: this.s3Bucket,
         Key: newKey,
         CopySource: keyCopy,
       }
+      console.log('copyParameter', copyParameter)
       const copyCommand = new CopyObjectCommand(copyParameter)
+
       await this.s3.send(copyCommand)
       return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${newKey}`
     } catch (error) {
@@ -175,6 +181,54 @@ export class S3Service extends CloudProviderService {
         throw new Error('S3 API Error:' + JSON.stringify(error.error, null, 2))
       }
       throw new Error(`Failed to delete file: ${error.message}`)
+    }
+  }
+
+  async pathExists(path: string): Promise<boolean> {
+    try {
+      const command = new HeadObjectCommand({
+        Bucket: this.s3Bucket,
+        Key: path,
+      })
+      await this.s3.send(command)
+      return true
+    } catch (error) {
+      return false
+    }
+  }
+
+  async moveObject(oldKey: string, newKey: string): Promise<string> {
+    try {
+      // // First check if the old object exists
+      // if (!(await this.pathExists(oldKey))) {
+      //   throw new Error(`Source object ${oldKey} does not exist`)
+      // }
+
+      // // Check if destination already exists
+      // if (await this.pathExists(newKey)) {
+      //   throw new Error(`Destination object ${newKey} already exists`)
+      // }
+
+      const copyParams = {
+        Bucket: this.s3Bucket,
+        Key: newKey,
+        CopySource: `${this.s3Bucket}/${oldKey}`,
+      }
+      console.log('copyParams', copyParams)
+      const copyCommand = new CopyObjectCommand(copyParams)
+      await this.s3.send(copyCommand)
+
+      const deleteParams = {
+        Bucket: this.s3Bucket,
+        Key: oldKey,
+      }
+      console.log('deleteParams', deleteParams)
+      const deleteCommand = new DeleteObjectCommand(deleteParams)
+      await this.s3.send(deleteCommand)
+
+      return `https://${this.s3Bucket}.s3.${this.region}.amazonaws.com/${newKey}`
+    } catch (error) {
+      throw new Error(`Failed to move object: ${error.message}`)
     }
   }
 }

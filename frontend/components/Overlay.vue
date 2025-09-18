@@ -107,8 +107,10 @@
           <div v-if="editMode === true">
             <p class="mt-2 mb-2 text-sm font-bold text-gray-500">
               Client - {{ props.imagesToEdit[0].client }}<br />
-              Gallery files:
             </p>
+            <div class="flex justify-center">
+              <h1 class="text-sm font-bold text-gray-500">Gallery files</h1>
+            </div>
             <table
               class="w-full border border-gray-300 border-collapse table-fixed"
             >

@@ -42,6 +42,7 @@ model GalleryBucket {
   galleries         Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   galleryId         String
   bucketDirectory   String
+  images            Image[]
 }
 
 model Image {
@@ -51,6 +52,8 @@ model Image {
   galleryId   String
   imageName   String
   price       Float @default(0)
+  galleryBucket GalleryBucket @relation(fields: [galleryBucketId], references: [id], onDelete: Cascade)
+  galleryBucketId String
   createAt    DateTime @default(now())
   updatedAt   DateTime @default(now())
 }

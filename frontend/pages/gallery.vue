@@ -786,12 +786,9 @@ const handleSubmit = async () => {
         clientEvents: clientEvents.length > 0 ? clientEvents : [clientEvent],
       }
       await upload.patchImage(payload)
+    } else {
+      await upload.image(formData.value)
     }
-    console.log('renderOverlayForm', renderOverlayForm.value)
-    console.log('isLoading', isLoading.value)
-    // else {
-    //   await upload.image(formData.value)
-    // }
     // formData.value = {
     //   name: '',
     //   description: '',

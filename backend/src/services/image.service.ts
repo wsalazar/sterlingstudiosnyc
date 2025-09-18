@@ -134,20 +134,30 @@ export class ImageService {
     }
   }
 
-  async renameFileInServer(serverData: {
-    bucketSubdirectory: string
-    image: { imageName: string }
-    newName?: string
-  }) {
+  async renameFileInServer(
+    oldKey: string,
+    newKey: string,
+    newSubdirectory: string
+  ) {
     try {
-      if (!serverData?.newName) {
-        return
-      }
-      const oldPath = `${this.uploadsDirectory}/${serverData.image.imageName}`
-      const newPath = `${this.uploadsDirectory}/${serverData?.newName}`
+      const oldPath = `${this.uploadsDirectory}/${oldKey}`
+      const newPath = `${this.uploadsDirectory}/${newKey}`
+      const uploadsDirectory = this.calculateUploadsDirectory(newSubdirectory)
+      await fs.mkdir(uploadsDirectory, { recursive: true })
+      console.log('oldPath', oldPath)
+      console.log('newPath', newPath)
       await fs.rename(oldPath, newPath)
     } catch (error) {
       throw new Error('There was an error rename file: ' + error)
+    }
+  }
+
+  async deleteSubdirectory(subdirectory: string) {
+    try {
+      const directory = `${this.uploadsDirectory}/${subdirectory}`
+      await fs.rm(directory, { recursive: true })
+    } catch (error) {
+      throw new Error('Failed to remove sub directory' + error)
     }
   }
 

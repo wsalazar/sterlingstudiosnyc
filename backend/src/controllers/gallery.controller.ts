@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '@/guards/jwt-auth.guard'
 import { RolesGuard } from '@/guards/roles.guard'
 import { GalleryRepository } from '@/repositories/gallery.repository'
 import { ConfigService } from '@nestjs/config'
+import { GalleryService } from '@/services/gallery.service'
 import { ImageService } from '@/services/image.service'
 import { sanitizeFilename } from '@/utils/helper'
 import {
@@ -59,7 +60,8 @@ export class GalleryController {
     private emailService: EmailService,
     private configService: ConfigService,
     private accessTokenRepository: AccessTokenRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private galleryService: GalleryService
   ) {}
 
   @Post('/')
@@ -249,113 +251,153 @@ export class GalleryController {
     @Res() res: Response
   ): Promise<Response> {
     try {
-      // console.log('images', images)
-      // console.log('gallery', gallery)
-      // console.log('galleryId', galleryId)
+      /**
+       * @todo
+       * When Editing a gallery and the user elects to only change the bucket. I will have to move the object to the new bucket
+       * This means since I have the imageId already I can get the image name and just move the object to the new bucket
+       */
       const { newPrice, newFile, existingImages, removedImages, clientEvents } =
         gallery
-      let imageData: {
-        id: string
-        bucketId: string
-        imageName?: string
-        price?: string
-      }[]
-      if (Array.isArray(existingImages)) {
-        imageData = existingImages?.map((images) => JSON.parse(images)) || []
-        console.log('imageData array', imageData)
-      } else {
-        imageData = [JSON.parse(existingImages)]
-        console.log('imageData object', imageData)
-      }
+      // console.log('gallery', gallery)
+      // console.log('images', images)
+      // let imageData: {
+      //   imageId: string
+      //   bucketId: string
+      //   imageName?: string
+      //   price?: string
+      //   bucket?: string
+      // }[]
+      this.galleryService.setExistingImages(existingImages)
+      await this.galleryService.moveDirectory()
+      await this.galleryService.updateImageDetails()
+      await this.galleryService.deleteSubdirectory()
 
-      const bucketDirectories = imageData.map(async (image) => {
-        const galleryBucketDirectory =
-          await this.galleryRepository.getGalleryBucketDirectoryByBucketId(
-            image.bucketId
-          )
-        return { directory: galleryBucketDirectory.bucketDirectory }
-      })
+      /**
+       * @todo I don't think I need this since the existing images will come with the bucket names
+       */
+      // const bucketDirectories = imageData.map(async (image) => {
+      //   const galleryBucketDirectory =
+      //     await this.galleryRepository.getGalleryBucketDirectoryByBucketId(
+      //       image.bucketId
+      //     )
+      //   return { directory: galleryBucketDirectory.bucketDirectory }
+      // })
+      // const buckets = await Promise.all(bucketDirectories)
+      // console.log('buckets', buckets)
+      // await Promise.all(
+      //   imageData.map(async (image, index) => {
+      //     console.log('image', image.imageId)
+      //     const imageObject = await this.galleryRepository.getImageNameById(
+      //       image.imageId
+      //     )
+      //     let newS3Url = null
+      //     let renamedImage = null
 
-      const buckets = await Promise.all(bucketDirectories)
-      await Promise.all(
-        imageData.map(async (image, index) => {
-          const imageObject = await this.galleryRepository.getImageNameById(
-            image.id
-          )
-          let newS3Url = null
-          let renamedImage = null
+      //     if (image?.imageName) {
+      //       const pathExists = await this.cloudProvider.pathExists(
+      //         `${image.bucket}`
+      //       )
+      //       console.log('pathExists', pathExists)
+      //       /**
+      //        *if the bucket doesn't exist it means that the admin has changed the bucket name
+      //        * so we need to move the object to the new bucket
+      //        * */
+      //       if (!pathExists) {
+      //         console.log('moving object')
+      //         await this.cloudProvider.moveObject(
+      //           `${buckets[index].directory}${imageObject.imageName}`,
+      //           `${image.bucket}${image.imageName}`
+      //         )
+      //         renamedImage = image?.imageName
+      //         const serverData = {
+      //           bucketSubdirectory: image.bucket,
+      //           image: { imageName: imageObject.imageName },
+      //           newName: renamedImage,
+      //         }
+      //         console.log('serverData', serverData)
+      //         await this.imageService.renameFileInServer(serverData)
+      //         await this.galleryRepository.updateImages(
+      //           galleryId,
+      //           image.imageId,
+      //           renamedImage,
+      //           newS3Url,
+      //           image?.price
+      //         )
+      //       } else {
+      //         const copyObject = {
+      //           image: { imageName: imageObject.imageName },
+      //           bucketSubdirectory: image.bucket,
+      //           newName: image.imageName,
+      //           tempFile: true,
+      //         }
+      //         console.log('copyObject', copyObject)
+      //         await this.cloudProvider.copyImageObject(copyObject)
+      //         const deleteObject = {
+      //           image: { imageName: imageObject.imageName },
+      //           bucketSubdirectory: image.bucket,
+      //         }
+      //         console.log('deleteObject', deleteObject)
+      //         await this.cloudProvider.deleteImageObject(deleteObject)
+      //         const copyObject2 = {
+      //           image: { imageName: `${image.imageName}.tmp` },
+      //           bucketSubdirectory: image.bucket,
+      //           newName: image.imageName,
+      //         }
+      //         console.log('copyObject2', copyObject2)
+      //         const s3Url =
+      //           await this.cloudProvider.copyImageObject(copyObject2)
+      //         const deleteObject2 = {
+      //           image: { imageName: `${image.imageName}.tmp` },
+      //           bucketSubdirectory: image.bucket,
+      //         }
+      //         console.log('deleteObject2', deleteObject2)
+      //         await this.cloudProvider.deleteImageObject(deleteObject2)
+      //         newS3Url = s3Url
+      //         renamedImage = image?.imageName
+      // const serverData = {
+      //   bucketSubdirectory: image.bucket,
+      //   image: { imageName: imageObject.imageName },
+      //   newName: renamedImage,
+      // }
+      // console.log('serverData', serverData)
+      // await this.imageService.renameFileInServer(serverData)
+      //       }
 
-          if (image?.imageName) {
-            await this.cloudProvider.copyImageObject({
-              image: { imageName: imageObject.imageName },
-              bucketSubdirectory: buckets[index].directory,
-              newName: image.imageName,
-              tempFile: true,
-            })
-            await this.cloudProvider.deleteImageObject({
-              image: { imageName: imageObject.imageName },
-              bucketSubdirectory: buckets[index].directory,
-            })
-            const s3Url = await this.cloudProvider.copyImageObject({
-              image: { imageName: `${imageObject.imageName}.tmp` },
-              bucketSubdirectory: buckets[index].directory,
-              newName: image.imageName,
-            })
-            await this.cloudProvider.deleteImageObject({
-              image: { imageName: `${imageObject.imageName}.tmp` },
-              bucketSubdirectory: buckets[index].directory,
-            })
-            newS3Url = s3Url
-            renamedImage = image?.imageName
-            const serverData = {
-              bucketSubdirectory: buckets[index].directory,
-              image: { imageName: image.imageName },
-              newName: renamedImage,
-            }
-            await this.imageService.renameFileInServer(serverData)
-          }
-
-          await this.galleryRepository.updateImages(
-            galleryId,
-            image.id,
-            renamedImage,
-            newS3Url,
-            image?.price
-          )
-        })
-      )
+      // await this.galleryRepository.updateImages(
+      //   galleryId,
+      //   image.imageId,
+      //   renamedImage,
+      //   newS3Url,
+      //   image?.price
+      // )
+      //     }
+      //   })
+      // )
 
       // const galleryItems = await this.galleryRepository.getGallery(galleryId)
-      // console.log('galleryItems', galleryItems)
 
-      // let size = 0
-      // images.forEach((file) => (file.size += size))
-      // const { newPrice, newFile, existingImages, removedImages } = gallery
-      // const imageData =
-      //   existingImages?.map((images) => JSON.parse(images)) || []
-      const galleryItems = await this.galleryRepository.getGallery(galleryId)
-      // /**
-      //  * Might want to throw this stuff into the image service
-      //  * @todo if the admin renames it but then removes. removing will take priority.
-      //  * So will have to capture image id and not go by image name
-      //  */
-      // Remove files that have been marked by users in the client
-      const images = galleryItems.images.map((image) => image.id)
-      const imagesToRemove = images.filter((imgId) =>
-        removedImages?.includes(imgId)
-      )
       /**
-       * @todo find a better way to get the bucket directory
+       * Might want to throw this stuff into the image service
+       * @todo if the admin renames it but then removes. removing will take priority.
+       * So will have to capture image id and not go by image name
        */
-      this.imageService.setSubdirectory(
-        galleryItems.galleryBuckets[0].bucketDirectory
-      )
-      const imageObj = await Promise.all(
-        imagesToRemove?.map(async (imgId) => {
-          const image = await this.galleryRepository.getImageNameById(imgId)
-          return { imageName: image.imageName }
-        })
-      )
+      // Remove files that have been marked by users in the client
+      // const imageIds = galleryItems.images.map((image) => image.id)
+      // const imagesToRemove = imageIds.filter((imgId) =>
+      //   removedImages?.includes(imgId)
+      // )
+      // /**
+      //  * @todo find a better way to get the bucket directory
+      //  */
+      // this.imageService.setSubdirectory(
+      //   galleryItems.galleryBuckets[0].bucketDirectory
+      // )
+      // const imageObj = await Promise.all(
+      //   imagesToRemove?.map(async (imgId) => {
+      //     const image = await this.galleryRepository.getImageNameById(imgId)
+      //     return { imageName: image.imageName }
+      //   })
+      // )
       // await this.imageService.deleteLowResolutionImagesFromDirectory(imageObj)
       // await this.galleryRepository.deleteGalleryEntry(galleryId, imageObj)
       // await this.cloudProvider.removeImageObjectFromS3(
@@ -363,6 +405,9 @@ export class GalleryController {
       //   imageObj
       // )
 
+      /**
+       * @remove
+       */
       // /**
       //  * I should not have to send the bucket directory. The object should know of it's existence
       //  * Or maybe inject the Image Service inot the Cloud Provider?
@@ -438,6 +483,9 @@ export class GalleryController {
       //   imagesData,
       //   totalSize
       // )
+      /**
+       * @remove
+       */
       return res.status(200).json({ message: 'Gallery updated successfully' })
     } catch (error) {
       const status = error.status || 500

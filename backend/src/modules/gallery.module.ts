@@ -12,6 +12,7 @@ import { UserRepository } from '@/repositories/user.repository'
 import { EmailService } from '@/services/email.service'
 import { AccessTokenRepository } from '@/repositories/accessToken.repository'
 import { JwtService } from '@nestjs/jwt'
+import { GalleryService } from '@/services/gallery.service'
 
 @Module({
   imports: [ConfigModule],
@@ -32,6 +33,13 @@ import { JwtService } from '@nestjs/jwt'
         return dropboxService
       },
     },
+    /**
+     * @todo I have to find out what in the sam hill this means
+     */
+    {
+      provide: CloudProviderService,
+      useExisting: 'CloudProviderService',
+    },
     DropboxService,
     S3Service,
     GalleryRepository,
@@ -42,6 +50,7 @@ import { JwtService } from '@nestjs/jwt'
     EmailService,
     AccessTokenRepository,
     JwtService,
+    GalleryService,
   ],
   exports: [
     GalleryRepository,
@@ -49,6 +58,7 @@ import { JwtService } from '@nestjs/jwt'
     UserRepository,
     AccessTokenRepository,
     JwtService,
+    GalleryService,
   ],
 })
 export class GalleryModule {}
